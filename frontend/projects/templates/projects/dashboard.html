@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>My Projects</h1>
+    {% for project in projects %}
+        <div style="border:1px solid black; padding:10px; margin:10px;">
+            <h3>{{ project.goal }}</h3>
+            <p>Status: {{ project.status }}</p>
+            <a href="{% url 'project_detail' project.id %}">View Tasks</a>
+        </div>
+    {% empty %}
+        <p>No projects yet.</p>
+        <a href="{% url 'create_project' %}">Create New Project</a>
+    {% endfor %}
+</body>
+</html>

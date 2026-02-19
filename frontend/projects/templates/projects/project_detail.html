@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Detail</title>
+</head>
+<body>
+    <h1>{{ project.goal }}</h1>
+
+    <h2>Tasks</h2>
+
+    {% for task in project.tasks.all %}
+        <div style="border:1px solid gray; padding:10px; margin:10px;">
+            <h4>{{ task.title }}</h4>
+            <p>Status: {{ task.status }}</p>
+            <p>Priority: {{ task.priority }}</p>
+        </div>
+    {% empty %}
+        <p>No tasks yet.</p>
+    {% endfor %}
+
+    <a href="/">Back to Dashboard</a>
+</body>
+</html>
