@@ -3,6 +3,8 @@ from .models import Project, Task, Progress, AIInsight
 from .planner import generate_tasks
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+from datetime import datetime
+from .critic import run_critic
 
 
 def dashboard(request):
@@ -43,6 +45,33 @@ def create_project(request):
         
         return redirect("dashboard")
     return render(request,"projects/create_project.html")
+
+def complete_task(request,task_id):
+    task=Task.objects.get(id=task_id)
+    if request.method=="POST":
+        actual_days=int(request.POST.get("actual_days"))
+        task.status="completed"
+        task.save()
+        Progress.objects.create(
+            task=task,
+            actual_days=actual_days
+
+        )
+
+        if actual_days>task.estimated_days:
+            delay=actual_days-task.estimated_days
+
+            AIInsight.objects.create(
+                project=task.project,
+                agent_type="scheduler",
+                message=f"Task {task.title} was delayed by {delay} days.Consider adjusting future task timelines."
+            )
+        run_critic(task.project)
+        
+
+        return redirect("project_detail",project_id=task.project.id)
+    return render(request,"projects/complete_task.html",{"task":task})
+
 
 
 

@@ -1,23 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Project Detail</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>{{ project.goal }}</h1>
 
     <h2>Tasks</h2>
 
     {% for task in project.tasks.all %}
-        <div style="border:1px solid gray; padding:10px; margin:10px;">
-            <h4>{{ task.title }}</h4>
-            <p>Status: {{ task.status }}</p>
-            <p>Priority: {{ task.priority }}</p>
-        </div>
+    <div style="border: 1px solid gray; padding: 10px; margin: 10px">
+      <h4>{{ task.title }}</h4>
+      <p>{{task.id}}</p>
+      <p>Status: {{ task.status }}</p>
+      <p>Priority: {{ task.priority }}</p>
+      {% if task.status != "completed" %}
+      <a href="{% url 'complete_task' task.id %}">Mark Complete</a>
+      {% endif %}
+    </div>
     {% empty %}
-        <p>No tasks yet.</p>
+    <p>No tasks yet.</p>
+    {% endfor %}
+    <h2>AI Insights</h2>
+
+    {% for insight in project.insights.all %}
+    <div style="border: 1px solid black; padding: 10px; margin: 10px">
+      <strong>{{ insight.agent_type|title }}</strong><br />
+      <pre>{{ insight.message }}</pre>
+    </div>
+    {% empty %}
+    <p>No insights yet.</p>
     {% endfor %}
 
     <a href="/">Back to Dashboard</a>
-</body>
+  </body>
 </html>
