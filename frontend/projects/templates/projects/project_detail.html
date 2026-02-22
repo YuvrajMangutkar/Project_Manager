@@ -14,6 +14,7 @@
       <p>{{task.id}}</p>
       <p>Status: {{ task.status }}</p>
       <p>Priority: {{ task.priority }}</p>
+      <p>Due Date: {{ task.due_date }}</p>
       {% if task.status != "completed" %}
       <a href="{% url 'complete_task' task.id %}">Mark Complete</a>
       {% endif %}
