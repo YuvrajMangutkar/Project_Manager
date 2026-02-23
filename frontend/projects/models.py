@@ -7,12 +7,17 @@ class Project(models.Model):
         ('active', 'Active'),
         ('completed', 'Completed'),
         ('paused', 'Paused'),
+        ('overdue', 'Overdue'),
     ]
     user=models.ForeignKey(User, on_delete=models.CASCADE)
     goal=models.TextField()
     total_days=models.IntegerField()
     start_date=models.DateField(auto_now=True)
     status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    completion_rate=models.FloatField(default=0)
+    risk_level=models.CharField(max_length=20, default='low')
+    delayed_tasks=models.IntegerField(default=0)
+    
 
 
     def __str__(self):

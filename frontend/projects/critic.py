@@ -13,17 +13,26 @@ def run_critic(project):
 
     for task in tasks:
         progress_obj = task.progress.first()
+        if progress_obj:
+            if progress_obj.actual_days > task.estimated_days:
+                delayed_tasks += 1
 
-    if progress_obj:
-        if progress_obj.actual_days > task.estimated_days:
-            delayed_tasks += 1
-    
-    if completion_rate>=80:
+    #risk is evaluated based on the completion rate and the number of delayed tasks
+    if completion_rate==100:
         risk="low"
-    elif completion_rate>=50:
+        project.status="completed"
+    elif completion_rate>=70:
+        risk="low"
+    elif completion_rate>=40:
         risk="medium"
     else:
         risk="high"
+        project.status="at_risk"
+
+    project.completion_rate=completion_rate
+    project.delayed_tasks=delayed_tasks
+    project.risk_level=risk
+    project.save()
 
     message = (
         f"Project Health Report\n"

@@ -5,6 +5,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from datetime import datetime,timedelta
 from .critic import run_critic
+from .monitor import check_project_overdue
 
 
 
@@ -15,6 +16,7 @@ def dashboard(request):
 
 def project_detail(request, project_id):
     project=get_object_or_404(Project,id=project_id)
+    check_project_overdue(project)
     return render(request,'projects/project_detail.html',{'project':project})
 
 @login_required
@@ -87,6 +89,7 @@ def complete_task(request,task_id):
                 f"{future_tasks.count()} future_tasks were rescheduled."
             )
         run_critic(task.project)
+        check_project_overdue(task.project)
         
 
         return redirect("project_detail",project_id=task.project.id)
