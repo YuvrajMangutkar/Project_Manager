@@ -6,9 +6,11 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime,timedelta
 from .critic import run_critic
 from .monitor import check_project_overdue
+from django.contrib.auth.decorators import login_required
+from .orchestrator import run_post_task_agents
 
 
-
+@login_required
 def dashboard(request):
     projects=Project.objects.all()
     return render(request,'projects/dashboard.html',{'projects':projects})
@@ -88,15 +90,53 @@ def complete_task(request,task_id):
                 message=f"Task {task.title} was delayed by {delay} days."
                 f"{future_tasks.count()} future_tasks were rescheduled."
             )
-        run_critic(task.project)
-        check_project_overdue(task.project)
+        # run_critic(task.project)
+        # check_project_overdue(task.project)
+        run_post_task_agents(task.project)
+        
         
 
         return redirect("project_detail",project_id=task.project.id)
     return render(request,"projects/complete_task.html",{"task":task})
 
 
+from django.contrib.auth import login, logout, authenticate
+from django.shortcuts import render, redirect
+from .forms import SignUpForm
 
+
+def signup_view(request):
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("dashboard")
+    else:
+        form = SignUpForm()
+
+    return render(request, "auth/signup.html", {"form": form})
+
+
+def login_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect("dashboard")
+        else:
+            return render(request, "auth/login.html", {"error": "Invalid credentials"})
+
+    return render(request, "auth/login.html")
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("login")
 
 
 
