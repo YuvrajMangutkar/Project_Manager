@@ -8,6 +8,10 @@ from .critic import run_critic
 from .monitor import check_project_overdue
 from django.contrib.auth.decorators import login_required
 from .orchestrator import run_post_task_agents
+from .diagram_generator import generate_usecase_diagram
+from django.http import FileResponse
+
+from .plantuml_generator import generate_usecase_diagram
 
 
 @login_required
@@ -139,6 +143,46 @@ def logout_view(request):
     return redirect("login")
 
 
+# @login_required
+# def generate_usecase_view(request, project_id):
+#     project = get_object_or_404(Project, id=project_id)
+
+#     diagram_code = generate_usecase_diagram(project)
+
+#     return render(request, "projects/usecase_diagram.html", {
+#         "diagram_code": diagram_code,
+#         "project": project
+#     })
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
+from .models import Project
 
 
-# Create your views here.
+
+
+@login_required
+def usecase_diagram_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram_data = generate_usecase_diagram(project)
+
+    return render(request, "projects/usecase_diagram.html", {
+        "image_url": diagram_data["image_url"],
+        "project": project
+    })
+
+
+@login_required
+def download_usecase_diagram(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram_data = generate_usecase_diagram(project)
+
+    file_path = diagram_data["image_path"]
+
+    return FileResponse(
+        open(file_path, "rb"),
+        as_attachment=True,
+        filename=f"usecase_project_{project.id}.png"
+    )

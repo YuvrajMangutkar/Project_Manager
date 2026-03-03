@@ -1,0 +1,14 @@
+@startuml
+actor User
+rectangle "Mastering Dynamic Programming" {
+  User --> (Create Project)
+  User --> (View Dashboard)
+  User --> (Day 1: Introduction to Dynamic Programming)
+  User --> (Day 2-3: Learn Basic DP Concepts)
+  User --> (Day 4: Practice with Simple Problems)
+  User --> (Day 5-6: Learn Advanced DP Concepts)
+  User --> (Day 7: Practice with Medium-Hard Problems)
+  User --> (Day 8-9: Learn DP Applications and Variations)
+  User --> (Day 10: Review and Finalize Knowledge)
+}
+@enduml

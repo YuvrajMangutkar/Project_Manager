@@ -9,6 +9,11 @@ urlpatterns=[
     path("signup/", views.signup_view, name="signup"),
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
+    # path("project/<int:project_id>/usecase/", views.generate_usecase_view, name="usecase_diagram"),
+    path("project/<int:project_id>/usecase/", views.usecase_diagram_view, name="usecase_diagram"),
+    path("project/<int:project_id>/usecase/download/",
+    views.download_usecase_diagram,
+    name="download_usecase_diagram"),
 
 
 ]

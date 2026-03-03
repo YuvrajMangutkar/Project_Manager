@@ -1,0 +1,21 @@
+@startuml
+actor User
+rectangle "System Design Preparation" {
+
+  User --> (Create Project)
+  User --> (Track Tasks)
+  User --> (View Project Health)
+  User --> (Generate Diagrams)
+
+  (Track Tasks) --> (Complete Task)
+  (Track Tasks) --> (Update Progress)
+
+  (Track Tasks) ..> (Task 1: Review System Requirements) : <<include>>
+  (Track Tasks) ..> (Task 2: Identify Key Components) : <<include>>
+  (Track Tasks) ..> (Task 3: Create High-Level System Architecture) : <<include>>
+  (Track Tasks) ..> (Task 4: Design Database Schema) : <<include>>
+  (Track Tasks) ..> (Task 5: Define APIs and Interfaces) : <<include>>
+  (Track Tasks) ..> (Task 6: Create System Design Document) : <<include>>
+
+}
+@enduml

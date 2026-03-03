@@ -1,0 +1,12 @@
+
+@startuml
+actor User
+rectangle "AI Project Manager System" {
+  User --> (Create Project)
+  User --> (View Dashboard)
+  User --> (Complete Task)
+  User --> (Track Progress)
+  User --> (Receive Notifications)
+  User --> (Generate Diagram)
+}
+@enduml

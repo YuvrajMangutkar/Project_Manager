@@ -1,0 +1,13 @@
+<h2>Use Case Diagram - {{ project.goal }}</h2>
+
+<img src="{{ image_url }}" alt="Use Case Diagram">
+
+<br><br>
+
+<a href="{% url 'download_usecase_diagram' project.id %}">
+    <button>Download Diagram</button>
+</a>
+
+<br><br>
+
+<a href="{% url 'project_detail' project.id %}">Back to Project</a>

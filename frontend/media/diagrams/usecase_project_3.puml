@@ -1,0 +1,13 @@
+@startuml
+actor User
+rectangle "System Design Preparation" {
+  User --> (Create Project)
+  User --> (View Dashboard)
+  User --> (Task 1: Review System Requirements)
+  User --> (Task 2: Identify Key Components)
+  User --> (Task 3: Create High-Level System Architecture)
+  User --> (Task 4: Design Database Schema)
+  User --> (Task 5: Define APIs and Interfaces)
+  User --> (Task 6: Create System Design Document)
+}
+@enduml

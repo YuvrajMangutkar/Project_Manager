@@ -1,0 +1,22 @@
+@startuml
+actor User
+rectangle "Mastering Dynamic Programming" {
+
+  User --> (Create Project)
+  User --> (Track Tasks)
+  User --> (View Project Health)
+  User --> (Generate Diagrams)
+
+  (Track Tasks) --> (Complete Task)
+  (Track Tasks) --> (Update Progress)
+
+  (Track Tasks) ..> (Day 1: Introduction to Dynamic Programming) : <<include>>
+  (Track Tasks) ..> (Day 2-3: Learn Basic DP Concepts) : <<include>>
+  (Track Tasks) ..> (Day 4: Practice with Simple Problems) : <<include>>
+  (Track Tasks) ..> (Day 5-6: Learn Advanced DP Concepts) : <<include>>
+  (Track Tasks) ..> (Day 7: Practice with Medium-Hard Problems) : <<include>>
+  (Track Tasks) ..> (Day 8-9: Learn DP Applications and Variations) : <<include>>
+  (Track Tasks) ..> (Day 10: Review and Finalize Knowledge) : <<include>>
+
+}
+@enduml
