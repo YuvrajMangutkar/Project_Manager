@@ -1,0 +1,15 @@
+<h2>DFD Level 1 - {{ project.goal }}</h2>
+
+<img src="{{ image_url }}" width="900">
+
+<br><br>
+
+<a href="{% url 'download_dfd_level1' project.id %}">
+<button>Download Diagram</button>
+</a>
+
+<br><br>
+
+<a href="{% url 'project_detail' project.id %}">
+Back to Project
+</a>

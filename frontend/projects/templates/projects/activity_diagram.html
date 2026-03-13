@@ -1,0 +1,15 @@
+<h2>Activity Diagram - {{ project.goal }}</h2>
+
+<img src="{{ image_url }}" width="900">
+
+<br><br>
+
+<a href="{% url 'download_activity_diagram' project.id %}">
+<button>Download Diagram</button>
+</a>
+
+<br><br>
+
+<a href="{% url 'project_detail' project.id %}">
+Back to Project
+</a>

@@ -1,0 +1,18 @@
+
+@startuml
+
+actor User
+
+rectangle "AI Project Manager System" as System
+
+database "Project Database" as DB
+
+User --> System : Project Goal Input
+System --> User : Task Plan
+System --> User : Project Insights
+System --> User : Generated Diagrams
+
+System --> DB : Store Project Data
+DB --> System : Retrieve Tasks
+
+@enduml

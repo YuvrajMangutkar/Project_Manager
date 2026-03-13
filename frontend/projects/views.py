@@ -186,3 +186,92 @@ def download_usecase_diagram(request, project_id):
         as_attachment=True,
         filename=f"usecase_project_{project.id}.png"
     )
+
+from .dfd_level0_generator import generate_dfd_level0
+
+
+@login_required
+def dfd_level0_view(request, project_id):
+
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram = generate_dfd_level0(project)
+
+    return render(request, "projects/dfd_level0.html", {
+        "image_url": diagram["image_url"],
+        "project": project
+    })
+
+
+@login_required
+def download_dfd_level0(request, project_id):
+
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram = generate_dfd_level0(project)
+
+    return FileResponse(
+        open(diagram["image_path"], "rb"),
+        as_attachment=True,
+        filename=f"dfd_level0_project_{project.id}.png"
+    )
+
+from .dfd_level1_generator import generate_dfd_level1
+from django.http import FileResponse
+
+
+@login_required
+def dfd_level1_view(request, project_id):
+
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram = generate_dfd_level1(project)
+
+    return render(request, "projects/dfd_level1.html", {
+        "image_url": diagram["image_url"],
+        "project": project
+    })
+
+
+@login_required
+def download_dfd_level1(request, project_id):
+
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram = generate_dfd_level1(project)
+
+    return FileResponse(
+        open(diagram["image_path"], "rb"),
+        as_attachment=True,
+        filename=f"dfd_level1_project_{project.id}.png"
+    )
+
+from .activity_generator import generate_activity_diagram
+
+
+
+@login_required
+def activity_diagram_view(request, project_id):
+
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram = generate_activity_diagram(project)
+
+    return render(request, "projects/activity_diagram.html", {
+        "image_url": diagram["image_url"],
+        "project": project
+    })
+
+
+@login_required
+def download_activity_diagram(request, project_id):
+
+    project = get_object_or_404(Project, id=project_id)
+
+    diagram = generate_activity_diagram(project)
+
+    return FileResponse(
+        open(diagram["image_path"], "rb"),
+        as_attachment=True,
+        filename=f"activity_project_{project.id}.png"
+    )

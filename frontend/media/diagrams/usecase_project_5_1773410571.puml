@@ -1,0 +1,29 @@
+@startuml
+actor User
+rectangle "to do list web app" {
+
+  User --> (Create Project)
+  User --> (Track Tasks)
+  User --> (View Project Health)
+  User --> (Generate Diagrams)
+
+  (Track Tasks) --> (Complete Task)
+  (Track Tasks) --> (Update Progress)
+
+  (Track Tasks) ..> (Day 1-2: Define Project Requirements and Setup Development Environment) : <<include>>
+  (Track Tasks) ..> (Day 3-4: Design Database Schema and API Endpoints) : <<include>>
+  (Track Tasks) ..> (Day 5-6: Implement User Registration and Login Feature) : <<include>>
+  (Track Tasks) ..> (Day 7-8: Develop Task CRUD Operations and List Views) : <<include>>
+  (Track Tasks) ..> (Day 9-10: Implement Task Priority and Due Date Features) : <<include>>
+  (Track Tasks) ..> (Day 11-12: Develop User Profile and Settings Feature) : <<include>>
+  (Track Tasks) ..> (Day 13-14: Implement Task Completion and Notification Features) : <<include>>
+  (Track Tasks) ..> (Day 15-16: Develop Search and Filter Functionality) : <<include>>
+  (Track Tasks) ..> (Day 17-18: Implement User Roles and Permissions) : <<include>>
+  (Track Tasks) ..> (Day 19-20: Develop Task Assignment Feature) : <<include>>
+  (Track Tasks) ..> (Day 21-22: Implement Collaboration Features Optional) : <<include>>
+  (Track Tasks) ..> (Day 23-24: Implement Task Statistics and Analytics) : <<include>>
+  (Track Tasks) ..> (Day 25-26: Deploy and Test the App) : <<include>>
+  (Track Tasks) ..> (Day 27-28: Polish and Refine the App) : <<include>>
+
+}
+@enduml
