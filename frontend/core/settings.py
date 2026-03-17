@@ -32,7 +32,10 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+# ALLOWED_HOSTS must match the host header in incoming requests.
+# Strip quotes/spaces in case the value comes from a .env file with quotes.
+raw_allowed = os.getenv("ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed.split(",") if h.strip()] if raw_allowed else []
 
 
 # Application definition
