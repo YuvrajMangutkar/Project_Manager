@@ -4,8 +4,8 @@ import time
 from django.conf import settings
 from .models import Task
 
-PLANTUML_JAVA_PATH = r"E:\java\bin\java.exe"
-PLANTUML_JAR_PATH = r"D:\plantuml\plantuml.jar"
+PLANTUML_JAVA_PATH = "java"
+PLANTUML_JAR_PATH = "/app/plantuml.jar"
 
 
 def generate_activity_diagram(project):

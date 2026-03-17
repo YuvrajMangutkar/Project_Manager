@@ -3,8 +3,8 @@ import subprocess
 import time
 from django.conf import settings
 
-PLANTUML_JAVA_PATH = r"E:\java\bin\java.exe"
-PLANTUML_JAR_PATH = r"D:\plantuml\plantuml.jar"
+PLANTUML_JAVA_PATH = "java"
+PLANTUML_JAR_PATH = "/app/plantuml.jar"
 
 
 def generate_dfd_level0(project):

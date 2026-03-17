@@ -1,5 +1,8 @@
-import ollama 
+import openai
 import json
+import os
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def generate_tasks(goal,total_days):
     prompt=f"""
@@ -20,14 +23,13 @@ def generate_tasks(goal,total_days):
       }}
     ]
 """
-    response=ollama.chat(
-        model="llama3",
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=[
-            {"role":"user","content":prompt}
-
+            {"role": "user", "content": prompt}
         ]
     )
-    content=response['message']['content']
+    content = response.choices[0].message.content
     #sometimes the model add the extra text -we have to clean it.
     try:
         tasks=json.loads(content)
