@@ -66,34 +66,13 @@ def generate_tasks(goal, total_days):
         except Exception:
             logger.exception("Ollama task generation failed")
 
-    # Fallback to OpenAI if Ollama is not used or fails
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    if openai_api_key:
-        try:
-            import openai
-
-            openai.api_key = openai_api_key
-            response = openai.ChatCompletion.create(
-                model=OPENAI_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=400,
-            )
-            content = response.choices[0].message.content
-            tasks = _parse_tasks(content)
-            if isinstance(tasks, list):
-                return tasks
-        except Exception:
-            logger.exception("OpenAI task generation failed")
-
     # Final fallback (ensures we still create at least one task)
     return [
         {
             "title": "(AI task generation unavailable)",
             "description": (
                 "The app could not generate tasks automatically. "
-                "To enable task generation, set USE_OLLAMA=true and configure Ollama, "
-                "or set OPENAI_API_KEY for OpenAI." 
+                "To enable task generation, set USE_OLLAMA=true and ensure Ollama is available."
             ),
             "priority": "high",
             "estimated_days": 1,
