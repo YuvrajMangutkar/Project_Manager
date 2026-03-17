@@ -1,15 +1,32 @@
-<h2>DFD Level 1 - {{ project.goal }}</h2>
+{% extends 'base.html' %}
 
-<img src="{{ image_url }}" width="900">
+{% block title %}DFD Level 1 | {{ project.goal|truncatechars:20 }}{% endblock %}
+{% block page_title %}System Diagrams{% endblock %}
 
-<br><br>
+{% block content %}
+<div class="glass-panel" style="padding: 2rem; max-width: 900px; margin: 0 auto;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Data Flow Diagram (Level 1)</h2>
+            <p style="color: var(--text-secondary); font-size: 0.875rem;">AI Generated for: {{ project.goal }}</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'project_detail' project.id %}" class="btn btn-outline">Back to Project</a>
+            <a href="{% url 'download_dfd_level1' project.id %}" class="btn btn-primary">⬇️ Download Image</a>
+        </div>
+    </div>
 
-<a href="{% url 'download_dfd_level1' project.id %}">
-<button>Download Diagram</button>
-</a>
+    <div style="background: white; padding: 2rem; border-radius: var(--border-radius); display: flex; justify-content: center; align-items: center; min-height: 400px; overflow-x: auto;">
+        {% if image_url %}
+            <img src="{{ image_url }}" alt="DFD Level 1" style="max-width: 100%; height: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        {% else %}
+            <div style="color: #64748b; text-align: center;">
+                <p style="font-size: 2rem; margin-bottom: 1rem;">⚙️</p>
+                <p>Generating diagram or image not available...</p>
+            </div>
+        {% endif %}
+    </div>
 
-<br><br>
-
-<a href="{% url 'project_detail' project.id %}">
-Back to Project
-</a>
+</div>
+{% endblock %}

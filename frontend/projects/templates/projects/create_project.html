@@ -1,26 +1,46 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Project</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-    <h1>Create New Project</h1>
+{% block title %}New Project | AIPM{% endblock %}
+{% block page_title %}Create New Project{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    
+    <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+        <h2 style="font-size: 1.25rem;">Define Your Goal</h2>
+        <p style="font-size: 0.875rem; margin-top: 0.5rem;">
+            Describe what you want to achieve. Our AI Planner will automatically break it down into manageable tasks and estimate timelines.
+        </p>
+    </div>
 
     <form method="POST">
         {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label" for="goal">Project Goal</label>
+            <textarea id="goal" name="goal" class="form-control" rows="4" required placeholder="e.g. Build an e-commerce website with user authentication and payment integration..."></textarea>
+        </div>
+        
+        <div class="form-group" style="max-width: 300px;">
+            <label class="form-label" for="total_days">Target Duration (Days)</label>
+            <input type="number" id="total_days" name="total_days" class="form-control" required min="1" placeholder="e.g. 30">
+        </div>
 
-        <label>Project Goal:</label><br>
-        <input type="text" name="goal" required style="width:300px;"><br><br>
-
-        <label>Total Days:</label><br>
-        <input type="number" name="total_days" required><br><br>
-
-        <button type="submit">Generate Plan</button>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
+            <button class="btn btn-primary" type="submit" id="submit-btn">
+                <span>✨ Generate Project Plan</span>
+            </button>
+        </div>
     </form>
+</div>
 
-    <br>
-    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
-
-</body>
-</html>
+<script>
+    // Add a simple loading state when form is submitted since AI generation takes time
+    document.querySelector('form').addEventListener('submit', function() {
+        const btn = document.getElementById('submit-btn');
+        btn.innerHTML = '<span>⏳ Generating Tasks...</span>';
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'not-allowed';
+    });
+</script>
+{% endblock %}

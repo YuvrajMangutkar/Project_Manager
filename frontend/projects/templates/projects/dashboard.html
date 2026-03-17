@@ -1,19 +1,65 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-</head>
-<body>
-    <h1>My Projects</h1>
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | AIPM{% endblock %}
+{% block page_title %}My Projects{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2 style="font-size: 1.25rem; font-weight: 500; color: var(--text-secondary);">Overview</h2>
+    </div>
+    <a href="{% url 'create_project' %}" class="btn btn-primary">➕ Create New Project</a>
+</div>
+
+{% if projects %}
+<div class="card-grid">
     {% for project in projects %}
-        <div style="border:1px solid black; padding:10px; margin:10px;">
-            <h3>{{ project.goal }}</h3>
-            <p>Status: {{ project.status }}</p>
-            <a href="{% url 'project_detail' project.id %}">View Tasks</a>
+    <div class="card glass-panel" style="display: flex; flex-direction: column;">
+        <div style="margin-bottom: 1rem;">
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">{{ project.goal|truncatechars:100 }}</h3>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                {% if project.status == 'completed' %}
+                    <span class="badge badge-completed">Completed</span>
+                {% elif project.status == 'overdue' %}
+                    <span class="badge badge-overdue">Overdue</span>
+                {% else %}
+                    <span class="badge badge-pending">In Progress</span>
+                {% endif %}
+                <span class="badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--text-secondary);">
+                    {{ project.total_days }} Days target
+                </span>
+            </div>
         </div>
-    {% empty %}
-        <p>No projects yet.</p>
-        <a href="{% url 'create_project' %}">Create New Project</a>
+        
+        <div class="card-body">
+            <!-- Could add a small snippet of progress here later -->
+            <p style="font-size: 0.875rem; margin-bottom: 1rem;">
+                Started: {{ project.start_date|date:"M d, Y" }}
+            </p>
+            
+            <div style="background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;">
+                <!-- Dummy progress bar for now until we calculate actual completion -->
+                <div style="background: var(--accent-blue); width: 40%; height: 100%; border-radius: 3px;"></div>
+            </div>
+            <p style="font-size: 0.75rem; text-align: right;">40% Complete</p>
+        </div>
+        
+        <div class="card-footer">
+            <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                {{ project.tasks.count }} Tasks
+            </span>
+            <a href="{% url 'project_detail' project.id %}" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.75rem;">View Details →</a>
+        </div>
+    </div>
     {% endfor %}
-</body>
-</html>
+</div>
+{% else %}
+<div class="glass-panel" style="text-align: center; padding: 4rem 2rem; border-style: dashed; border-color: rgba(255,255,255,0.2);">
+    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📁</div>
+    <h3 style="margin-bottom: 0.5rem;">No projects yet</h3>
+    <p style="margin-bottom: 1.5rem;">Get started by creating your first AI-managed project.</p>
+    <a href="{% url 'create_project' %}" class="btn btn-primary">Create New Project</a>
+</div>
+{% endif %}
+
+{% endblock %}

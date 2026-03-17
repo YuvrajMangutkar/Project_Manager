@@ -1,19 +1,41 @@
-<h2>Login</h2>
+{% extends 'base.html' %}
 
-<form method="POST">
-    {% csrf_token %}
+{% block title %}Login | AIPM{% endblock %}
+{% block page_title %}Welcome Back{% endblock %}
 
-    <label>Username:</label>
-    <input type="text" name="username" required><br><br>
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="glass-panel" style="width: 100%; max-width: 400px; padding: 2.5rem;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Login to AIPM</h2>
 
-    <label>Password:</label>
-    <input type="password" name="password" required><br><br>
+        <form method="POST">
+            {% csrf_token %}
 
-    <button type="submit">Login</button>
-</form>
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" required placeholder="Enter your username">
+            </div>
 
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required placeholder="Enter your password">
+            </div>
 
-<a href="{% url 'signup' %}">Create Account</a>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
+        </form>
+
+        {% if error %}
+        <div style="margin-top: 1.5rem; padding: 1rem; border-radius: var(--border-radius); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; text-align: center;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                Don't have an account? 
+                <a href="{% url 'signup' %}" style="color: var(--accent-blue); font-weight: 500;">Create Account</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

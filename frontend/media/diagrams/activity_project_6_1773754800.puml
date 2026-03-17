@@ -1,0 +1,16 @@
+@startuml
+start
+:Create Project;
+:Generate Task Plan;
+:Research and Planning;
+:Database Design;
+:User Authentication and Authorization;
+:Student Module Development;
+:Faculty Module Development;
+:Admin Module Development;
+:Integration and Testing;
+:Deployment and Maintenance;
+:Analyze Project Health;
+:Generate Diagrams;
+stop
+@enduml

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agentic AI Project Manager{% endblock %}</title>
+    {% load static %}
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar Navigation -->
+        {% if user.is_authenticated %}
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <h2>🤖 AIPM</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'dashboard' %}" class="nav-item">
+                    <span>📊 Dashboard</span>
+                </a>
+                <a href="{% url 'create_project' %}" class="nav-item">
+                    <span>➕ New Project</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span class="user-name">{{ user.username }}</span>
+                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header glass-panel">
+                <div class="header-content">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                    <div class="header-actions">
+                        <!-- Add global search or notifications here later -->
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Specific Content -->
+            <div class="content-area">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

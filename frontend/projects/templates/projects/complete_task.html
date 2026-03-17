@@ -1,10 +1,50 @@
-<h2>Complete Task: {{ task.title }}</h2>
+{% extends 'base.html' %}
 
-<form method="POST">
-    {% csrf_token %}
+{% block title %}Complete Task | AIPM{% endblock %}
+{% block page_title %}Update Task Status{% endblock %}
 
-    <label>Actual Days Taken:</label><br>
-    <input type="number" name="actual_days" required><br><br>
+{% block content %}
+<div class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+    
+    <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">{{ task.title }}</h2>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <span class="badge" style="border: 1px solid var(--glass-border);">Project: {{ task.project.goal|truncatechars:30 }}</span>
+            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">Est: {{ task.estimated_days }} days</span>
+        </div>
+    </div>
 
-    <button type="submit">Mark Complete</button>
-</form>
+    <div class="insight-box" style="margin-bottom: 2rem; border-left-color: var(--accent-blue); background: linear-gradient(to right, rgba(59, 130, 246, 0.1), transparent);">
+        <div class="insight-header" style="color: var(--accent-blue);">
+            ℹ️ Note
+        </div>
+        <p style="font-size: 0.875rem; color: var(--text-primary); margin: 0;">
+            Entering the actual days taken will trigger the AI Scheduler. If the task took longer than estimated, future tasks will automatically be rescheduled.
+        </p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label" for="actual_days">Actual Days Taken</label>
+            <input type="number" id="actual_days" name="actual_days" class="form-control" required min="1" placeholder="e.g. {{ task.estimated_days }}">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+            <a href="{% url 'project_detail' task.project.id %}" class="btn btn-outline">Cancel</a>
+            <button class="btn btn-success" type="submit" id="submit-btn">
+                <span>✓ Mark as Completed</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        const btn = document.getElementById('submit-btn');
+        btn.innerHTML = '<span>⏳ Analyzing Impact...</span>';
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'not-allowed';
+    });
+</script>
+{% endblock %}

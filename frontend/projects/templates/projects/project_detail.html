@@ -1,38 +1,152 @@
-<!doctype html>
-<html>
-  <head>
-    <title>Project Detail</title>
-  </head>
-  <body>
-    <h1>{{ project.goal }}</h1>
+{% extends 'base.html' %}
 
-    <h2>Tasks</h2>
+{% block title %}{{ project.goal|truncatechars:30 }} | AIPM{% endblock %}
+{% block page_title %}Project Details{% endblock %}
 
-    {% for task in project.tasks.all %}
-    <div style="border: 1px solid gray; padding: 10px; margin: 10px">
-      <h4>{{ task.title }}</h4>
-      <p>{{task.id}}</p>
-      <p>Status: {{ task.status }}</p>
-      <p>Priority: {{ task.priority }}</p>
-      <p>Due Date: {{ task.due_date }}</p>
-      {% if task.status != "completed" %}
-      <a href="{% url 'complete_task' task.id %}">Mark Complete</a>
-      {% endif %}
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.5rem; max-width: 70%;">{{ project.goal }}</h2>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline">← Back</a>
     </div>
-    {% empty %}
-    <p>No tasks yet.</p>
-    {% endfor %}
-    <h2>AI Insights</h2>
 
-    {% for insight in project.insights.all %}
-    <div style="border: 1px solid black; padding: 10px; margin: 10px">
-      <strong>{{ insight.agent_type|title }}</strong><br />
-      <pre>{{ insight.message }}</pre>
+    <!-- Quick Stats Bar -->
+    <div class="glass-panel" style="display: flex; gap: 2rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="flex: 1;">
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Status</p>
+            {% if project.status == 'completed' %}
+                <span class="badge badge-completed" style="font-size: 1rem; padding: 0.5rem 1rem;">Completed</span>
+            {% elif project.status == 'overdue' %}
+                <span class="badge badge-overdue" style="font-size: 1rem; padding: 0.5rem 1rem;">Overdue</span>
+            {% else %}
+                <span class="badge badge-pending" style="font-size: 1rem; padding: 0.5rem 1rem;">In Progress</span>
+            {% endif %}
+        </div>
+        
+        <div style="width: 1px; background: var(--glass-border);"></div>
+        
+        <div style="flex: 1;">
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Timeline</p>
+            <p style="font-weight: 600; font-size: 1.125rem;">{{ project.total_days }} Days</p>
+        </div>
+
+        <div style="width: 1px; background: var(--glass-border);"></div>
+        
+        <div style="flex: 1;">
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Start Date</p>
+            <p style="font-weight: 600; font-size: 1.125rem;">{{ project.start_date|date:"F d, Y" }}</p>
+        </div>
     </div>
-    {% empty %}
-    <p>No insights yet.</p>
-    {% endfor %}
+</div>
 
-    <a href="/">Back to Dashboard</a>
-  </body>
-</html>
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Left Column: Tasks -->
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Project Tasks</h3>
+            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">{{ project.tasks.count }} Total</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for task in project.tasks.all %}
+            <div class="glass-panel" style="padding: 1.5rem; border-left: 4px solid {% if task.status == 'completed' %}var(--accent-green){% elif task.status == 'overdue' %}var(--accent-red){% else %}var(--accent-blue){% endif %};">
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <h4 style="font-size: 1.125rem; margin: 0;">{{ task.title }}</h4>
+                    {% if task.status != "completed" %}
+                        <a href="{% url 'complete_task' task.id %}" class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Mark Complete</a>
+                    {% else %}
+                        <span class="badge badge-completed">Done</span>
+                    {% endif %}
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Priority</p>
+                        <span class="badge" style="text-transform: capitalize; border: 1px solid var(--glass-border);">{{ task.priority }}</span>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Est. Time</p>
+                        <p style="font-size: 0.875rem; margin: 0;">{{ task.estimated_days }} days</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Due Date</p>
+                        <p style="font-size: 0.875rem; margin: 0; {% if task.status != 'completed' and task.due_date < display_date %}color: var(--accent-red); font-weight: 500;{% endif %}">{{ task.due_date|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="glass-panel" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                <p>No tasks generated yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Diagrams Section (Optional, if these links exist) -->
+        <div style="margin-top: 3rem;">
+            <h3 style="margin-bottom: 1rem;">System Diagrams</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="{% url 'usecase_diagram' project.id %}" class="btn btn-outline" style="flex:1;">Use Case Diagram</a>
+                <a href="{% url 'dfd_level0' project.id %}" class="btn btn-outline" style="flex:1;">DFD Level 0</a>
+                <a href="{% url 'dfd_level1' project.id %}" class="btn btn-outline" style="flex:1;">DFD Level 1</a>
+                <a href="{% url 'activity_diagram' project.id %}" class="btn btn-outline" style="flex:1;">Activity Diagram</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: AI Insights & Risk -->
+    <div>
+        <div style="position: sticky; top: 2rem;">
+            <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🧠</span> AI Insights
+            </h3>
+
+            {% if project.insights.count > 0 %}
+                <div style="display: flex; flex-direction: column; gap: 0;">
+                    {% for insight in project.insights.all reversed %}
+                    <div class="insight-box" style="margin-bottom: 1rem;">
+                        <div class="insight-header">
+                            <span style="font-size: 1.25rem;">
+                                {% if insight.agent_type == 'critic' %}⚠️
+                                {% elif insight.agent_type == 'scheduler' %}📅
+                                {% elif insight.agent_type == 'monitor' %}🔍
+                                {% else %}🤖{% endif %}
+                            </span>
+                            <span>{{ insight.agent_type|title }} Agent</span>
+                        </div>
+                        <div class="insight-content" style="font-size: 0.875rem;">
+                            <!-- We render message as text to avoid overflow, adding a max-height and scroll if needed -->
+                            <pre style="max-height: 200px; overflow-y: auto;">{{ insight.message }}</pre>
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: right; margin-top: 0.5rem;">
+                            {{ insight.created_at|date:"M d, H:i" }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="glass-panel" style="padding: 2rem; text-align: center;">
+                    <span style="font-size: 2rem; opacity: 0.5;">📉</span>
+                    <p style="color: var(--text-secondary); margin-top: 1rem; font-size: 0.875rem;">
+                        No insights generated yet. The AI agents will analyze progress as you complete tasks.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom scrollbar for pre blocks */
+pre::-webkit-scrollbar { width: 6px; }
+pre::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+pre::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+@media (max-width: 1024px) {
+    div[style*="grid-template-columns: 2fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}

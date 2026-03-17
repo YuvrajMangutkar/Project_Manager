@@ -1,0 +1,23 @@
+@startuml
+actor User
+rectangle "Build an College ERP system " {
+
+  User --> (Create Project)
+  User --> (Track Tasks)
+  User --> (View Project Health)
+  User --> (Generate Diagrams)
+
+  (Track Tasks) --> (Complete Task)
+  (Track Tasks) --> (Update Progress)
+
+  (Track Tasks) ..> (Research and Planning) : <<include>>
+  (Track Tasks) ..> (Database Design) : <<include>>
+  (Track Tasks) ..> (User Authentication and Authorization) : <<include>>
+  (Track Tasks) ..> (Student Module Development) : <<include>>
+  (Track Tasks) ..> (Faculty Module Development) : <<include>>
+  (Track Tasks) ..> (Admin Module Development) : <<include>>
+  (Track Tasks) ..> (Integration and Testing) : <<include>>
+  (Track Tasks) ..> (Deployment and Maintenance) : <<include>>
+
+}
+@enduml
