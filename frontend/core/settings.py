@@ -32,10 +32,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-# ALLOWED_HOSTS must match the host header in incoming requests.
-# Strip quotes/spaces in case the value comes from a .env file with quotes.
+# ALLOWED_HOSTS — comma-separated list, or * to allow all (not recommended for prod)
 raw_allowed = os.getenv("ALLOWED_HOSTS", "")
-ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed.split(",") if h.strip()] if raw_allowed else []
+ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed.split(",") if h.strip()] if raw_allowed else ["localhost", "127.0.0.1"]
+
+# CSRF_TRUSTED_ORIGINS — required by Django 4+ for HTTPS POST requests (login, forms etc.)
+# Without this every form submission on Render returns 400 Bad Request.
+raw_csrf = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [o.strip().strip('"').strip("'") for o in raw_csrf.split(",") if o.strip()] if raw_csrf else []
 
 
 # Application definition
