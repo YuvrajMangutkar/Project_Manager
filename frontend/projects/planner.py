@@ -40,43 +40,53 @@ def _parse_tasks(text: str):
 
 
 def generate_tasks(goal, total_days):
-    """Generate a task list.
+    """Generate a task list using Ollama.
 
-    If USE_OLLAMA is true, try using Ollama (local or remote).
-    Otherwise, fall back to OpenAI.
-
-    If neither works, return a fallback placeholder task so the project
-    creation still succeeds.
+    This function assumes Ollama is available and configured.
+    If Ollama fails, it returns a fallback task.
     """
+
+    if not USE_OLLAMA:
+        logger.warning("USE_OLLAMA is not set to true. Task generation will use fallback.")
+        return [
+            {
+                "title": "(Ollama not enabled)",
+                "description": "Set USE_OLLAMA=true to enable task generation.",
+                "priority": "high",
+                "estimated_days": 1,
+            }
+        ]
 
     prompt = _prompt(goal, total_days)
 
-    if USE_OLLAMA:
-        try:
-            import ollama
+    try:
+        import ollama
 
-            response = ollama.chat(
-                model=OLLAMA_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            content = response["message"]["content"]
-            tasks = _parse_tasks(content)
-            if isinstance(tasks, list):
-                return tasks
-        except Exception:
-            logger.exception("Ollama task generation failed")
+        logger.info(f"Generating tasks using Ollama model: {OLLAMA_MODEL}")
+        response = ollama.chat(
+            model=OLLAMA_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        content = response["message"]["content"]
+        logger.debug(f"Ollama response: {content}")
 
-    # Final fallback (ensures we still create at least one task)
-    return [
-        {
-            "title": "(AI task generation unavailable)",
-            "description": (
-                "The app could not generate tasks automatically. "
-                "To enable task generation, set USE_OLLAMA=true and ensure Ollama is available."
-            ),
-            "priority": "high",
-            "estimated_days": 1,
-        }
-    ]
+        tasks = _parse_tasks(content)
+        if isinstance(tasks, list) and tasks:
+            logger.info(f"Successfully generated {len(tasks)} tasks")
+            return tasks
+        else:
+            logger.error("Ollama returned invalid task format")
+            raise ValueError("Invalid task format")
+
+    except Exception as e:
+        logger.exception(f"Ollama task generation failed: {e}")
+        return [
+            {
+                "title": "(Ollama task generation failed)",
+                "description": f"Error: {str(e)}. Check Ollama is running and accessible.",
+                "priority": "high",
+                "estimated_days": 1,
+            }
+        ]
 
 
