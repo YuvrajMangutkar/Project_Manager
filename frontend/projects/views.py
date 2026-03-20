@@ -90,9 +90,9 @@ def complete_task(request,task_id):
 
             AIInsight.objects.create(
                 project=task.project,
-                agent_type="scheduler",
-                message=f"Task {task.title} was delayed by {delay} days."
-                f"{future_tasks.count()} future_tasks were rescheduled."
+                agent_type="planner",
+                message=f"Task '{task.title}' was delayed by {delay} days. "
+                f"{future_tasks.count()} future tasks were rescheduled."
             )
         # run_critic(task.project)
         # check_project_overdue(task.project)

@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     && wget -O /app/plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2023.13/plantuml-1.2023.13.jar \
-    && curl -fsSL https://ollama.ai/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
+
+# NOTE: Ollama local installation may fail in Render environment; use external Ollama host (OLLAMA_HOST) or OpenAI fallback.
 
 # Install python dependencies
 COPY requirements.txt /app/

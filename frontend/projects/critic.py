@@ -1,14 +1,15 @@
-from .models import Task,AIInsight
+from .models import Task, AIInsight
+
 
 def run_critic(project):
-    tasks=Task.objects.filter(project=project)
-    total_tasks=tasks.count()
+    tasks = Task.objects.filter(project=project)
+    total_tasks = tasks.count()
 
-    if total_tasks==0:
-        return 
-    
-    completed_tasks=tasks.filter(status="completed").count()
-    completion_rate=(completed_tasks)/total_tasks*100
+    if total_tasks == 0:
+        return
+
+    completed_tasks = tasks.filter(status="completed").count()
+    completion_rate = (completed_tasks) / total_tasks * 100
     delayed_tasks = 0
 
     for task in tasks:
@@ -17,21 +18,21 @@ def run_critic(project):
             if progress_obj.actual_days > task.estimated_days:
                 delayed_tasks += 1
 
-    #risk is evaluated based on the completion rate and the number of delayed tasks
-    if completion_rate==100:
-        risk="low"
-        project.status="completed"
-    elif completion_rate>=70:
-        risk="low"
-    elif completion_rate>=40:
-        risk="medium"
+    # risk is evaluated based on the completion rate and the number of delayed tasks
+    if completion_rate == 100:
+        risk = "low"
+        project.status = "completed"
+    elif completion_rate >= 70:
+        risk = "low"
+    elif completion_rate >= 40:
+        risk = "medium"
     else:
-        risk="high"
-        project.status="at_risk"
+        risk = "high"
+        project.status = "active"  # 'at_risk' is not a valid choice; keep as 'active'
 
-    project.completion_rate=completion_rate
-    project.delayed_tasks=delayed_tasks
-    project.risk_level=risk
+    project.completion_rate = completion_rate
+    project.delayed_tasks = delayed_tasks
+    project.risk_level = risk
     project.save()
 
     message = (
@@ -43,7 +44,6 @@ def run_critic(project):
     )
     AIInsight.objects.create(
         project=project,
-        agent_type="critic",
+        agent_type="analyzer",
         message=message
     )
-    
