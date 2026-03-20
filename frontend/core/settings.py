@@ -32,14 +32,25 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-# ALLOWED_HOSTS — comma-separated list, or * to allow all (not recommended for prod)
+# ALLOWED_HOSTS — comma-separated list from env, or auto-detected from Render
 raw_allowed = os.getenv("ALLOWED_HOSTS", "")
 ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed.split(",") if h.strip()] if raw_allowed else ["localhost", "127.0.0.1"]
 
-# CSRF_TRUSTED_ORIGINS — required by Django 4+ for HTTPS POST requests (login, forms etc.)
-# Without this every form submission on Render returns 400 Bad Request.
+# Render automatically injects RENDER_EXTERNAL_HOSTNAME — use it so ALLOWED_HOSTS
+# is always correct even when you create a new Render service without updating env vars.
+RENDER_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
+if RENDER_HOSTNAME and RENDER_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_HOSTNAME)
+
+# CSRF_TRUSTED_ORIGINS — required by Django 4+ for HTTPS POST requests.
+# Without this every form submission (login, signup, create project) returns 400.
 raw_csrf = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = [o.strip().strip('"').strip("'") for o in raw_csrf.split(",") if o.strip()] if raw_csrf else []
+if RENDER_HOSTNAME:
+    render_origin = f"https://{RENDER_HOSTNAME}"
+    if render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(render_origin)
+
 
 
 # Application definition
