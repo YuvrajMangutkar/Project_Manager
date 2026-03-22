@@ -244,6 +244,32 @@ def activity_diagram_view(request, project_id):
 # download_activity_diagram removed — diagrams are served directly from PlantUML server URL.
 
 
+# ── Diagram Proxy Download View ───────────────────────────────────────────────
+# The 'download' attribute on <a> tags doesn't work for cross-origin URLs.
+# This view fetches the PlantUML image server-side and streams it as a download.
+@login_required
+def download_diagram(request):
+    import requests as req_lib
+    from django.http import HttpResponse
+
+    image_url = request.GET.get("url", "")
+    filename = request.GET.get("name", "diagram.png")
+
+    if not image_url or "plantuml.com" not in image_url:
+        return HttpResponse("Invalid or missing diagram URL.", status=400)
+
+    try:
+        resp = req_lib.get(image_url, timeout=15)
+        resp.raise_for_status()
+        response = HttpResponse(resp.content, content_type="image/png")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        return HttpResponse(f"Failed to fetch diagram: {e}", status=502)
+
+
+
+
 # ── Groq Diagnostic View ─────────────────────────────────────────────────────
 # Visit /debug/groq/ in production to see exactly why task generation fails.
 # Remove this view once everything works.

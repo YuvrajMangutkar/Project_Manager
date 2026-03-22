@@ -21,4 +21,5 @@ urlpatterns=[
      views.activity_diagram_view,
      name="activity_diagram"),
     path("debug/groq/", views.groq_debug_view, name="groq_debug"),
+    path("download-diagram/", views.download_diagram, name="download_diagram"),
 ]

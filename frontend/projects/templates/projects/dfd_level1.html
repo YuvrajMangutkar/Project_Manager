@@ -13,7 +13,7 @@
         </div>
         <div style="display: flex; gap: 1rem;">
             <a href="{% url 'project_detail' project.id %}" class="btn btn-outline">Back to Project</a>
-            <a href="{{ image_url }}" target="_blank" download="dfd_level1.png" class="btn btn-primary">⬇️ Download Image</a>
+            <a href="{% url 'download_diagram' %}?url={{ image_url|urlencode }}&name=dfd_level1.png" class="btn btn-primary">⬇️ Download Image</a>
         </div>
     </div>
 
