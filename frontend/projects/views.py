@@ -180,6 +180,7 @@ def usecase_diagram_view(request, project_id):
 
     return render(request, "projects/usecase_diagram.html", {
         "image_url": diagram_data["image_url"],
+        "plantuml_code": diagram_data.get("plantuml_code", ""),
         "project": project
     })
 
@@ -199,6 +200,7 @@ def dfd_level0_view(request, project_id):
 
     return render(request, "projects/dfd_level0.html", {
         "image_url": diagram["image_url"],
+        "plantuml_code": diagram.get("plantuml_code", ""),
         "project": project
     })
 
@@ -218,6 +220,7 @@ def dfd_level1_view(request, project_id):
 
     return render(request, "projects/dfd_level1.html", {
         "image_url": diagram["image_url"],
+        "plantuml_code": diagram.get("plantuml_code", ""),
         "project": project
     })
 
@@ -237,6 +240,7 @@ def activity_diagram_view(request, project_id):
 
     return render(request, "projects/activity_diagram.html", {
         "image_url": diagram["image_url"],
+        "plantuml_code": diagram.get("plantuml_code", ""),
         "project": project
     })
 

@@ -4,29 +4,118 @@
 {% block page_title %}System Diagrams{% endblock %}
 
 {% block content %}
-<div class="glass-panel" style="padding: 2rem; max-width: 900px; margin: 0 auto;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
-        <div>
-            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Data Flow Diagram (Level 1)</h2>
-            <p style="color: var(--text-secondary); font-size: 0.875rem;">AI Generated for: {{ project.goal }}</p>
-        </div>
-        <div style="display: flex; gap: 1rem;">
-            <a href="{% url 'project_detail' project.id %}" class="btn btn-outline">Back to Project</a>
-            <a href="{% url 'download_diagram' %}?url={{ image_url|urlencode }}&name=dfd_level1.png" class="btn btn-primary">⬇️ Download Image</a>
-        </div>
-    </div>
+<style>
+  .diagram-tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+  .diagram-tab  { padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; font-weight:600;
+                  border:1px solid var(--glass-border); color:var(--text-secondary);
+                  text-decoration:none; transition:all .2s; }
+  .diagram-tab:hover{ border-color:#6366F1; color:#6366F1; }
+  .diagram-tab.active{ background:#6366F1; color:#fff; border-color:#6366F1; }
 
-    <div style="background: white; padding: 2rem; border-radius: var(--border-radius); display: flex; justify-content: center; align-items: center; min-height: 400px; overflow-x: auto;">
-        {% if image_url %}
-            <img src="{{ image_url }}" alt="DFD Level 1" style="max-width: 100%; height: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-        {% else %}
-            <div style="color: #64748b; text-align: center;">
-                <p style="font-size: 2rem; margin-bottom: 1rem;">⚙️</p>
-                <p>Generating diagram or image not available...</p>
-            </div>
-        {% endif %}
+  .zoom-controls{ display:flex; gap:0.5rem; align-items:center; }
+  .zoom-btn{ width:32px; height:32px; border-radius:6px; border:1px solid var(--glass-border);
+             background:transparent; color:var(--text-secondary); font-size:1.1rem; cursor:pointer;
+             display:flex; align-items:center; justify-content:center; transition:all .2s; }
+  .zoom-btn:hover{ border-color:#6366F1; color:#6366F1; }
+
+  .diagram-frame{ background:#1E293B; border-radius:12px; border:1px solid #334155;
+                  display:flex; justify-content:center; align-items:center;
+                  min-height:450px; overflow:auto; padding:2rem; position:relative; }
+
+  .diagram-spinner{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                    text-align:center; color:#6366F1; }
+  .spinner-ring{ width:48px; height:48px; border:4px solid #334155;
+                 border-top-color:#6366F1; border-radius:50%;
+                 animation:spin .8s linear infinite; margin:0 auto 1rem; }
+  @keyframes spin{ to{transform:rotate(360deg)} }
+
+  .code-toggle-btn{ padding:0.4rem 0.8rem; border-radius:6px; font-size:0.78rem; font-weight:600;
+                    border:1px solid var(--glass-border); background:transparent; cursor:pointer;
+                    color:var(--text-secondary); transition:all .2s; }
+  .code-toggle-btn:hover{ border-color:#6366F1; color:#6366F1; }
+
+  .plantuml-code-box{ background:#0F172A; border:1px solid #334155; border-radius:10px;
+                      padding:1.25rem; margin-top:1rem; display:none;
+                      font-family:'Courier New', monospace; font-size:0.78rem;
+                      color:#94A3B8; white-space:pre-wrap; word-break:break-all;
+                      max-height:320px; overflow-y:auto; }
+
+  .diagram-img{ max-width:100%; height:auto; border-radius:8px;
+               box-shadow:0 4px 24px rgba(0,0,0,0.4); transition:transform .2s; }
+</style>
+
+<div class="glass-panel" style="padding:2rem; max-width:1000px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; border-bottom:1px solid var(--glass-border); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h2 style="font-size:1.5rem; margin-bottom:0.4rem;">🔗 Data Flow Diagram (Level 1)</h2>
+      <p style="color:var(--text-secondary); font-size:0.85rem;">AI Generated for: <strong style="color:var(--text-primary);">{{ project.goal|truncatechars:60 }}</strong></p>
     </div>
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <button class="code-toggle-btn" onclick="toggleCode()" id="codeBtn">🧾 View Code</button>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+        <button class="zoom-btn" onclick="zoomReset()" title="Reset Zoom">⊙</button>
+        <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+      </div>
+      <a href="{% url 'download_diagram' %}?url={{ image_url|urlencode }}&name=dfd_level1.png" class="btn btn-primary">⬇️ Download</a>
+      <a href="{% url 'project_detail' project.id %}" class="btn btn-outline">← Back</a>
+    </div>
+  </div>
+
+  <!-- Diagram Tabs -->
+  <div class="diagram-tabs">
+    <a href="{% url 'usecase_diagram' project.id %}" class="diagram-tab">📋 Use Case</a>
+    <a href="{% url 'activity_diagram' project.id %}" class="diagram-tab">⚡ Activity</a>
+    <a href="{% url 'dfd_level0' project.id %}" class="diagram-tab">🗺️ DFD Level 0</a>
+    <a href="{% url 'dfd_level1' project.id %}" class="diagram-tab active">🔗 DFD Level 1</a>
+  </div>
+
+  <!-- Diagram Frame -->
+  <div class="diagram-frame" id="diagramFrame">
+    {% if image_url %}
+      <div class="diagram-spinner" id="spinner">
+        <div class="spinner-ring"></div>
+        <p style="font-size:0.85rem; color:#94A3B8;">Loading diagram…</p>
+      </div>
+      <img id="diagramImg" class="diagram-img" src="{{ image_url }}" alt="DFD Level 1"
+           style="display:none;" onload="onImageLoaded()" onerror="onImageError()">
+    {% else %}
+      <div style="text-align:center; color:#64748b;">
+        <p style="font-size:2.5rem; margin-bottom:1rem;">⚙️</p>
+        <p>Diagram could not be generated.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- PlantUML Code Viewer -->
+  <pre class="plantuml-code-box" id="codeBox">{{ plantuml_code }}</pre>
 
 </div>
+
+<script>
+  let zoomLevel = 1;
+  const img = document.getElementById('diagramImg');
+  const spinner = document.getElementById('spinner');
+  const codeBox = document.getElementById('codeBox');
+  const codeBtn = document.getElementById('codeBtn');
+
+  function onImageLoaded() {
+    if(spinner) spinner.style.display = 'none';
+    if(img) img.style.display = 'block';
+  }
+  function onImageError() {
+    if(spinner) spinner.innerHTML = '<p style="color:#EF4444;">⚠️ Failed to load diagram from PlantUML server.<br>Check your internet connection.</p>';
+  }
+  function zoomIn()    { zoomLevel = Math.min(zoomLevel + 0.2, 3);   applyZoom(); }
+  function zoomOut()   { zoomLevel = Math.max(zoomLevel - 0.2, 0.4); applyZoom(); }
+  function zoomReset() { zoomLevel = 1; applyZoom(); }
+  function applyZoom() { if(img) img.style.transform = `scale(${zoomLevel})`; }
+  function toggleCode() {
+    const open = codeBox.style.display === 'block';
+    codeBox.style.display = open ? 'none' : 'block';
+    codeBtn.textContent   = open ? '🧾 View Code' : '✖ Hide Code';
+  }
+</script>
 {% endblock %}
