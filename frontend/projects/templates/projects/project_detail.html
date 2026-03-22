@@ -289,7 +289,10 @@ async function scaffoldTask(btnElement) {
     document.getElementById('scaffold-modal').style.display = 'flex';
     
     try {
-        const response = await fetch(`/project/task/${taskId}/scaffold/`, {
+        const urlTemplate = "{% url 'task_scaffold' 0 %}";
+        const fetchUrl = urlTemplate.replace('0', taskId);
+        
+        const response = await fetch(fetchUrl, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}'

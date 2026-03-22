@@ -257,7 +257,7 @@ Answer the user's questions based strictly on this context. If they ask for help
         
     except Exception as e:
         logger.error(f"Chat API Error: {str(e)}")
-        return JsonResponse({"error": "Failed to process message"}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
 
 @login_required
 def task_scaffold_api(request, task_id):
