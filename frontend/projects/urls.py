@@ -20,4 +20,5 @@ urlpatterns=[
     path("project/<int:project_id>/activity/",
      views.activity_diagram_view,
      name="activity_diagram"),
+    path("debug/groq/", views.groq_debug_view, name="groq_debug"),
 ]

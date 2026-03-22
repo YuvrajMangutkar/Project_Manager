@@ -242,3 +242,53 @@ def activity_diagram_view(request, project_id):
 
 
 # download_activity_diagram removed — diagrams are served directly from PlantUML server URL.
+
+
+# ── Groq Diagnostic View ─────────────────────────────────────────────────────
+# Visit /debug/groq/ in production to see exactly why task generation fails.
+# Remove this view once everything works.
+import os
+from django.http import HttpResponse
+
+@login_required
+def groq_debug_view(request):
+    import traceback
+    lines = []
+
+    api_key = os.getenv("GROQ_API_KEY", "")
+    lines.append(f"GROQ_API_KEY set: {'YES — ' + api_key[:10] + '...' if api_key else 'NO (empty)'}")
+    lines.append(f"GROQ_MODEL: {os.getenv('GROQ_MODEL', 'llama3-8b-8192 (default)')}")
+    lines.append("")
+
+    if not api_key:
+        lines.append("❌ GROQ_API_KEY is missing. Set it in Render → Environment.")
+        return HttpResponse("\n".join(lines), content_type="text/plain")
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+        response = client.chat.completions.create(
+            model=os.getenv("GROQ_MODEL", "llama3-8b-8192"),
+            messages=[{"role": "user", "content": "Reply with the single word: WORKING"}],
+            temperature=0,
+        )
+        raw = response.choices[0].message.content
+        lines.append(f"✅ Groq connection OK. Raw response: {raw!r}")
+    except Exception as e:
+        lines.append(f"❌ Groq call FAILED: {e}")
+        lines.append("")
+        lines.append(traceback.format_exc())
+
+    lines.append("")
+    lines.append("--- Full task generation test ---")
+    try:
+        from .planner import _generate_with_groq
+        tasks = _generate_with_groq("Build a simple todo app", 7)
+        lines.append(f"✅ Task generation OK — {len(tasks)} tasks returned")
+        for t in tasks:
+            lines.append(f"  • {t.get('title', '?')} ({t.get('priority','?')}, {t.get('estimated_days','?')} days)")
+    except Exception as e:
+        lines.append(f"❌ Task generation FAILED: {e}")
+        lines.append(traceback.format_exc())
+
+    return HttpResponse("\n".join(lines), content_type="text/plain")

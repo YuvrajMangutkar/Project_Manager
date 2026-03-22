@@ -20,7 +20,7 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama3-8b-8192")  # free model on Groq
 
 USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("1", "true", "yes")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST")
 
 
 def _prompt(goal: str, total_days: int) -> str:
@@ -120,6 +120,7 @@ def _generate_with_ollama(goal: str, total_days: int):
     response = client.chat(
         model=OLLAMA_MODEL,
         messages=[{"role": "user", "content": prompt}],
+        options={"timeout": 30}
     )
     content = response["message"]["content"]
     logger.debug(f"Ollama response: {content}")
@@ -149,15 +150,15 @@ def generate_tasks(goal: str, total_days: int):
             logger.warning(f"Groq failed: {e}. Trying Ollama...")
 
     # 2. Try Ollama (works when OLLAMA_HOST points to a running server)
-    if USE_OLLAMA:
+    if USE_OLLAMA and OLLAMA_HOST and OLLAMA_HOST != "http://localhost:11434":
         try:
             return _generate_with_ollama(goal, total_days)
         except Exception as e:
             logger.warning(f"Ollama failed: {e}. Returning fallback task.")
 
     # 3. Nothing configured or all failed
-    if not GROQ_API_KEY and not USE_OLLAMA:
-        reason = "No AI provider configured. Set GROQ_API_KEY or USE_OLLAMA=true."
+    if not GROQ_API_KEY and not (USE_OLLAMA and OLLAMA_HOST and OLLAMA_HOST != "http://localhost:11434"):
+        reason = "No AI provider configured. Set GROQ_API_KEY (free at console.groq.com) or set USE_OLLAMA=true with OLLAMA_HOST pointing to your Ollama server."
     else:
         reason = "All configured AI providers failed — check build logs."
 
