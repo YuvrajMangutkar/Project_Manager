@@ -38,10 +38,9 @@
             </p>
             
             <div style="background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;">
-                <!-- Dummy progress bar for now until we calculate actual completion -->
-                <div style="background: var(--accent-blue); width: 40%; height: 100%; border-radius: 3px;"></div>
+                <div style="background: var(--accent-blue); width: {{ project.completion_rate|floatformat:0 }}%; height: 100%; border-radius: 3px;"></div>
             </div>
-            <p style="font-size: 0.75rem; text-align: right;">40% Complete</p>
+            <p style="font-size: 0.75rem; text-align: right;">{{ project.completion_rate|floatformat:0 }}% Complete</p>
         </div>
         
         <div class="card-footer">

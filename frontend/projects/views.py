@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from .orchestrator import run_post_task_agents
 from .diagram_generator import generate_usecase_diagram
 from django.http import FileResponse
+from .forms import TaskForm
 
 from .plantuml_generator import generate_usecase_diagram
 
@@ -113,6 +114,77 @@ def complete_task(request,task_id):
 
         return redirect("project_detail",project_id=task.project.id)
     return render(request,"projects/complete_task.html",{"task":task})
+
+
+@login_required
+def add_task(request, project_id):
+    project = get_object_or_404(Project, id=project_id, user=request.user)
+    if request.method == "POST":
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.project = project
+            task.save()
+            return redirect("project_detail", project_id=project.id)
+    else:
+        form = TaskForm()
+    return render(request, "projects/add_task.html", {"form": form, "project": project})
+
+
+@login_required
+def edit_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id, project__user=request.user)
+    if request.method == "POST":
+        form = TaskForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            return redirect("project_detail", project_id=task.project.id)
+    else:
+        form = TaskForm(instance=task)
+    return render(request, "projects/edit_task.html", {"form": form, "task": task})
+
+
+@login_required
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id, project__user=request.user)
+    if request.method == "POST":
+        project_id = task.project.id
+        task.delete()
+        return redirect("project_detail", project_id=project_id)
+    # If accessed via GET, redirect back
+    return redirect("project_detail", project_id=task.project.id)
+
+
+@login_required
+def gantt_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id, user=request.user)
+    tasks = list(Task.objects.filter(project=project).order_by("due_date", "id"))
+    
+    # Calculate start offsets for each task
+    gantt_tasks = []
+    current_offset = 0
+    
+    for t in tasks:
+        # If task has a specific due date, we can calculate actual dates,
+        # but a simple relative offset works best for the visual chart
+        duration = t.estimated_days or 1
+        
+        gantt_tasks.append({
+            "id": t.id,
+            "title": t.title,
+            "priority": t.priority,
+            "status": t.status,
+            "duration": duration,
+            "start_offset": current_offset,
+            "due_date": t.due_date.strftime("%b %d, %Y") if t.due_date else "N/A"
+        })
+        current_offset += duration
+
+    return render(request, "projects/gantt.html", {
+        "project": project,
+        "gantt_tasks": gantt_tasks,
+        "total_duration": current_offset if current_offset > 0 else 1
+    })
 
 
 from django.contrib.auth import login, logout, authenticate

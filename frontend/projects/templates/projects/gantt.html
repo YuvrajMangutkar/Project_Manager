@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Gantt Chart | {{ project.goal|truncatechars:20 }}{% endblock %}
+{% block page_title %}Gantt Chart Timeline{% endblock %}
+
+{% block content %}
+<style>
+  .diagram-tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+  .diagram-tab  { padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; font-weight:600;
+                  border:1px solid var(--glass-border); color:var(--text-secondary);
+                  text-decoration:none; transition:all .2s; }
+  .diagram-tab:hover{ border-color:#6366F1; color:#6366F1; }
+  .diagram-tab.active{ background:#6366F1; color:#fff; border-color:#6366F1; }
+
+  .gantt-container {
+      background: #0F172A;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 2rem;
+      overflow-x: auto;
+      min-height: 400px;
+  }
+
+  .gantt-grid {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 1rem;
+      color: #F1F5F9;
+  }
+
+  .gantt-header {
+      font-weight: 600;
+      color: #94A3B8;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+  }
+
+  .gantt-task-row {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      background: #1E293B;
+  }
+  .gantt-task-row:hover { background: #334155; }
+
+  .task-label {
+      font-size: 0.875rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .task-meta {
+      font-size: 0.7rem;
+      color: #94A3B8;
+  }
+
+  .timeline-area {
+      position: relative;
+      height: 30px;
+      /* Grid lines for every 10% */
+      background-image: linear-gradient(to right, #334155 1px, transparent 1px);
+      background-size: 10% 100%;
+      border-left: 1px solid #334155;
+      border-right: 1px solid #334155;
+  }
+
+  .gantt-bar {
+      position: absolute;
+      height: 20px;
+      top: 5px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+  }
+  .gantt-bar:hover { transform: scaleY(1.2); }
+
+  /* Priority Colors */
+  .bar-high { background: linear-gradient(90deg, #EF4444, #B91C1C); border: 1px solid #7F1D1D; }
+  .bar-medium { background: linear-gradient(90deg, #F59E0B, #D97706); border: 1px solid #78350F; }
+  .bar-low { background: linear-gradient(90deg, #10B981, #059669); border: 1px solid #14532D; }
+
+  /* Status Colors (override priority if needed, or append to it) */
+  .bar-completed { background: linear-gradient(90deg, #3B82F6, #2563EB); border: 1px solid #1E3A8A; opacity: 0.7; }
+  
+  /* Tooltip logic */
+  .tooltip {
+      position: relative;
+      display: inline-block;
+  }
+  .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #0F172A;
+      color: #fff;
+      text-align: left;
+      border-radius: 6px;
+      padding: 0.75rem;
+      position: absolute;
+      z-index: 10;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border: 1px solid #475569;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      font-size: 0.75rem;
+  }
+  .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+  }
+
+</style>
+
+<div class="glass-panel" style="padding:2rem; max-width:1200px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; border-bottom:1px solid var(--glass-border); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h2 style="font-size:1.5rem; margin-bottom:0.4rem;">📅 Gantt Chart Timeline</h2>
+      <p style="color:var(--text-secondary); font-size:0.85rem;">Interactive visual timeline for: <strong style="color:var(--text-primary);">{{ project.goal|truncatechars:60 }}</strong></p>
+    </div>
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+      <a href="{% url 'project_detail' project.id %}" class="btn btn-outline">← Back to Project</a>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div style="display: flex; gap: 1.5rem; margin-bottom: 2rem; font-size: 0.8rem; background: #0F172A; padding: 1rem; border-radius: 8px; border: 1px solid #334155;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;"><div style="width:16px; height:16px; background:#EF4444; border-radius:3px;"></div> High Priority</div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;"><div style="width:16px; height:16px; background:#F59E0B; border-radius:3px;"></div> Medium Priority</div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;"><div style="width:16px; height:16px; background:#10B981; border-radius:3px;"></div> Low Priority</div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;"><div style="width:16px; height:16px; background:#3B82F6; border-radius:3px; opacity: 0.7;"></div> Completed</div>
+      <div style="margin-left: auto; color: #94A3B8;">Est. Total Timeline: {{ total_duration }} Days</div>
+  </div>
+
+  <!-- Diagram Tabs (To match the other diagram pages) -->
+  <div class="diagram-tabs">
+    <a href="{% url 'gantt_view' project.id %}" class="diagram-tab active">📅 Gantt Chart</a>
+    <a href="{% url 'usecase_diagram' project.id %}" class="diagram-tab">📋 Use Case</a>
+    <a href="{% url 'activity_diagram' project.id %}" class="diagram-tab">⚡ Activity</a>
+    <a href="{% url 'dfd_level0' project.id %}" class="diagram-tab">🗺️ DFD Level 0</a>
+    <a href="{% url 'dfd_level1' project.id %}" class="diagram-tab">🔗 DFD Level 1</a>
+  </div>
+
+  <!-- Full Gantt Chart Render -->
+  <div class="gantt-container">
+      {% if gantt_tasks %}
+      
+      <div class="gantt-grid" style="margin-bottom: 0.5rem;">
+          <div class="gantt-header">Tasks</div>
+          <div class="gantt-header" style="position: relative;">
+              <span style="position: absolute; left: 0;">Start</span>
+              <span style="position: absolute; right: 0;">End</span>
+          </div>
+      </div>
+
+      {% for t in gantt_tasks %}
+      <div class="gantt-task-row">
+          <div class="task-label tooltip" title="{{ t.title }}">
+              <span>{{ t.title|truncatechars:35 }}</span>
+              <span class="task-meta">{{ t.status|title }} • {{ t.priority|title }} Priority</span>
+          </div>
+
+          <div class="timeline-area">
+              {# Calculate percentages for CSS positioning #}
+              {# width = (task_duration / total_duration) * 100 #}
+              {# left = (task_start_offset / total_duration) * 100 #}
+              
+              <div class="gantt-bar tooltip {% if t.status == 'completed' %}bar-completed{% else %}bar-{{ t.priority }}{% endif %}" 
+                   style="width: calc(({{ t.duration }} / {{ total_duration }}) * 100%); left: calc(({{ t.start_offset }} / {{ total_duration }}) * 100%);">
+                  
+                  {% if t.duration > 1 %}{{ t.duration }}d{% endif %}
+                  
+                  <span class="tooltiptext">
+                      <strong>{{ t.title }}</strong><br><br>
+                      Priority: {{ t.priority|title }}<br>
+                      Status: {{ t.status|title }}<br>
+                      Duration: {{ t.duration }} Days<br>
+                      Due Date: {{ t.due_date }}
+                  </span>
+              </div>
+          </div>
+      </div>
+      {% endfor %}
+      
+      {% else %}
+      <div style="text-align:center; color:#64748b; padding: 3rem 0;">
+        <p style="font-size:2.5rem; margin-bottom:1rem;">📭</p>
+        <p>No tasks to display yet.</p>
+      </div>
+      {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

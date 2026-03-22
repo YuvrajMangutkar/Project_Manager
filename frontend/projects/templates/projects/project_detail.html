@@ -43,21 +43,38 @@
     <!-- Left Column: Tasks -->
     <div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3>Project Tasks</h3>
-            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">{{ project.tasks.count }} Total</span>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h3 style="margin: 0;">Project Tasks</h3>
+                <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">{{ project.tasks.count }} Total</span>
+            </div>
+            <a href="{% url 'add_task' project.id %}" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.875rem;">➕ Add Task</a>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 1rem;">
             {% for task in project.tasks.all %}
-            <div class="glass-panel" style="padding: 1.5rem; border-left: 4px solid {% if task.status == 'completed' %}var(--accent-green){% elif task.status == 'overdue' %}var(--accent-red){% else %}var(--accent-blue){% endif %};">
+            <div class="glass-panel" style="padding: 1.5rem; position: relative;">
+                {% if task.status == 'completed' %}
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-green); border-radius: 8px 0 0 8px;"></div>
+                {% elif task.status == 'overdue' %}
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-red); border-radius: 8px 0 0 8px;"></div>
+                {% else %}
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-blue); border-radius: 8px 0 0 8px;"></div>
+                {% endif %}
                 
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                     <h4 style="font-size: 1.125rem; margin: 0;">{{ task.title }}</h4>
-                    {% if task.status != "completed" %}
-                        <a href="{% url 'complete_task' task.id %}" class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Mark Complete</a>
-                    {% else %}
-                        <span class="badge badge-completed">Done</span>
-                    {% endif %}
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{% url 'edit_task' task.id %}" class="btn btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">✏️ Edit</a>
+                        {% if task.status != "completed" %}
+                            <a href="{% url 'complete_task' task.id %}" class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Mark Complete</a>
+                        {% else %}
+                            <span class="badge badge-completed">Done</span>
+                        {% endif %}
+                        <form method="post" action="{% url 'delete_task' task.id %}" style="display: inline;" onsubmit="return confirm('Delete this task?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: var(--accent-red); border-color: rgba(239, 68, 68, 0.3);">🗑️</button>
+                        </form>
+                    </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
@@ -71,7 +88,10 @@
                     </div>
                     <div>
                         <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Due Date</p>
-                        <p style="font-size: 0.875rem; margin: 0; {% if task.status != 'completed' and task.due_date < display_date %}color: var(--accent-red); font-weight: 500;{% endif %}">{{ task.due_date|date:"M d, Y" }}</p>
+                        <p style="font-size: 0.875rem; margin: 0; 
+                           {% if task.status != 'completed' and task.due_date %}
+                               {% if task.due_date < display_date %}color: var(--accent-red); font-weight: 500;{% endif %}
+                           {% endif %}">{{ task.due_date|date:"M d, Y"|default:"N/A" }}</p>
                     </div>
                 </div>
             </div>
@@ -84,8 +104,9 @@
         
         <!-- Diagrams Section (Optional, if these links exist) -->
         <div style="margin-top: 3rem;">
-            <h3 style="margin-bottom: 1rem;">System Diagrams</h3>
+            <h3 style="margin-bottom: 1rem;">System Diagrams & Timelines</h3>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="{% url 'gantt_view' project.id %}" class="btn btn-primary" style="flex:1; display:flex; gap:0.5rem; align-items:center; justify-content:center;">📅 Gantt Chart</a>
                 <a href="{% url 'usecase_diagram' project.id %}" class="btn btn-outline" style="flex:1;">Use Case Diagram</a>
                 <a href="{% url 'dfd_level0' project.id %}" class="btn btn-outline" style="flex:1;">DFD Level 0</a>
                 <a href="{% url 'dfd_level1' project.id %}" class="btn btn-outline" style="flex:1;">DFD Level 1</a>
