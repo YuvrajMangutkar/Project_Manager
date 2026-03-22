@@ -1,6 +1,5 @@
 import os
-from django.conf import settings
-from groq import Groq
+from openai import OpenAI
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,7 +9,10 @@ def generate_executive_summary(project, tasks):
     Asks Groq to write a formal executive summary of the project's health.
     """
     try:
-        client = Groq(api_key=os.environ.get("GROQ_API_KEY", settings.GROQ_API_KEY))
+        client = OpenAI(
+            api_key=os.getenv("GROQ_API_KEY"),
+            base_url="https://api.groq.com/openai/v1"
+        )
         
         total = tasks.count()
         completed = tasks.filter(status='completed').count()

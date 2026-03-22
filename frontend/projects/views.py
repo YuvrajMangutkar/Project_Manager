@@ -188,7 +188,6 @@ def gantt_view(request, project_id):
 
 import json
 from django.http import JsonResponse
-from groq import Groq
 from django.conf import settings
 from .models import ProjectMessage
 
@@ -206,7 +205,11 @@ def ai_chat_api(request, project_id):
             return JsonResponse({"error": "Message is required"}, status=400)
             
         import os
-        client = Groq(api_key=os.environ.get("GROQ_API_KEY", settings.GROQ_API_KEY))
+        from openai import OpenAI
+        client = OpenAI(
+            api_key=os.getenv("GROQ_API_KEY"),
+            base_url="https://api.groq.com/openai/v1"
+        )
         
         # Save user message
         ProjectMessage.objects.create(project=project, role="user", content=user_message)
@@ -265,7 +268,11 @@ def task_scaffold_api(request, task_id):
     
     try:
         import os
-        client = Groq(api_key=os.environ.get("GROQ_API_KEY", settings.GROQ_API_KEY))
+        from openai import OpenAI
+        client = OpenAI(
+            api_key=os.getenv("GROQ_API_KEY"),
+            base_url="https://api.groq.com/openai/v1"
+        )
         
         prompt = f"""You are an expert AI productivity assistant. I need you to generate the immediate next steps, boilerplate code, or a structured outline to complete the following task:
 
