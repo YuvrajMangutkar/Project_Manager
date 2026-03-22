@@ -74,4 +74,14 @@ class AIInsight(models.Model):
         return f"Insight from {self.agent_type} for {self.project.goal}"
     
 
+class ProjectMessage(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="messages")
+    role = models.CharField(max_length=20, choices=[("user", "User"), ("assistant", "Assistant"), ("system", "System")])
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["timestamp"]
+
+    def __str__(self):
+        return f"{self.role} msg on {self.project.goal[:20]}"

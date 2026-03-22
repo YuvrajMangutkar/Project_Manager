@@ -186,6 +186,186 @@ def gantt_view(request, project_id):
         "total_duration": current_offset if current_offset > 0 else 1
     })
 
+import json
+from django.http import JsonResponse
+from groq import Groq
+from django.conf import settings
+from .models import ProjectMessage
+
+@login_required
+def ai_chat_api(request, project_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required"}, status=405)
+    
+    project = get_object_or_404(Project, id=project_id, user=request.user)
+    
+    try:
+        data = json.loads(request.body)
+        user_message = data.get("message", "").strip()
+        if not user_message:
+            return JsonResponse({"error": "Message is required"}, status=400)
+            
+        import os
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY", settings.GROQ_API_KEY))
+        
+        # Save user message
+        ProjectMessage.objects.create(project=project, role="user", content=user_message)
+        
+        # Build System Prompt Context
+        tasks = project.tasks.all()
+        completed = tasks.filter(status='completed').count()
+        total = tasks.count()
+        
+        task_list_str = "\n".join([f"- [ ] {t.title} (Priority: {t.priority}, Status: {t.status})" for t in tasks])
+        
+        system_prompt = f"""You are the dedicated AI Project Manager for the project "{project.goal}".
+Your goal is to be extremely helpful, professional, and concise.
+Here is the current state of the project:
+Total Tasks: {total} ({completed} completed).
+Completion Rate: {project.completion_rate}%
+Status: {project.status}
+
+Here is the task list:
+{task_list_str}
+
+Answer the user's questions based strictly on this context. If they ask for help drafting something (like an email or code), use this context to draft it.
+"""
+        # Fetch conversation history (last 10 messages)
+        history = ProjectMessage.objects.filter(project=project).order_by("-timestamp")[:10]
+        history = list(reversed(history))
+        
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in history:
+            messages.append({"role": msg.role, "content": msg.content})
+            
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1000,
+        )
+        
+        ai_response = completion.choices[0].message.content
+        
+        # Save AI message
+        ProjectMessage.objects.create(project=project, role="assistant", content=ai_response)
+        
+        return JsonResponse({"response": ai_response})
+        
+    except Exception as e:
+        logger.error(f"Chat API Error: {str(e)}")
+        return JsonResponse({"error": "Failed to process message"}, status=500)
+
+@login_required
+def task_scaffold_api(request, task_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required"}, status=405)
+        
+    task = get_object_or_404(Task, id=task_id, project__user=request.user)
+    
+    try:
+        import os
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY", settings.GROQ_API_KEY))
+        
+        prompt = f"""You are an expert AI productivity assistant. I need you to generate the immediate next steps, boilerplate code, or a structured outline to complete the following task:
+
+Task Name: {task.title}
+Task Priority: {task.priority}
+Task Description: {task.description or 'No extra description provided.'}
+Project Goal: {task.project.goal}
+
+Please provide exactly what I need to do to complete this task. 
+- If it's a coding task, provide the boilerplate code structure.
+- If it's writing/marketing, provide a draft.
+- If it's research/management, provide a step-by-step checklist.
+
+Output ONLY markdown format. Be concise, professional, and directly actionable."""
+
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=1500,
+        )
+        
+        return JsonResponse({"scaffold": completion.choices[0].message.content})
+        
+    except Exception as e:
+        logger.error(f"Scaffold API Error: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+import io
+from django.http import FileResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from .report_generator import generate_executive_summary
+
+@login_required
+def export_pdf_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id, user=request.user)
+    tasks = project.tasks.all()
+    
+    # Generate AI Summary
+    summary_text = generate_executive_summary(project, tasks)
+    
+    # Setup PDF Buffer
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='Center', alignment=1))
+    
+    story = []
+    
+    # Title
+    story.append(Paragraph(f"Project Status Report: {project.goal}", styles['Heading1']))
+    story.append(Paragraph(f"Generated for: {request.user.username}", styles['Normal']))
+    story.append(Spacer(1, 12))
+    
+    # Project Details
+    story.append(Paragraph("Project Details", styles['Heading2']))
+    details = f"Status: {project.status.capitalize()} | Completion: {project.completion_rate}% | Total Days: {project.total_days}"
+    story.append(Paragraph(details, styles['Normal']))
+    story.append(Spacer(1, 12))
+    
+    # AI Executive Summary
+    story.append(Paragraph("AI Executive Summary", styles['Heading2']))
+    for paragraph in summary_text.split('\n'):
+        if paragraph.strip():
+            story.append(Paragraph(paragraph.strip(), styles['Normal']))
+            story.append(Spacer(1, 6))
+            
+    story.append(Spacer(1, 12))
+    
+    # Tasks Table
+    story.append(Paragraph("Current Tasks", styles['Heading2']))
+    
+    table_data = [['Task Name', 'Priority', 'Est. Days', 'Status']]
+    for t in tasks:
+        table_data.append([t.title, t.priority.capitalize(), str(t.estimated_days), t.status.capitalize()])
+        
+    table = Table(table_data, colWidths=[200, 80, 80, 80])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    
+    story.append(table)
+    
+    # Build PDF
+    doc.build(story)
+    
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f"Project_{project.id}_Report.pdf")
+
 
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import render, redirect
