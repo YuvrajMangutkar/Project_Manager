@@ -242,7 +242,7 @@ Answer the user's questions based strictly on this context. If they ask for help
             messages.append({"role": msg.role, "content": msg.content})
             
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
             messages=messages,
             temperature=0.7,
             max_tokens=1000,
@@ -289,7 +289,7 @@ Please provide exactly what I need to do to complete this task.
 Output ONLY markdown format. Be concise, professional, and directly actionable."""
 
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5,
             max_tokens=1500,

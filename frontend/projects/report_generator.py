@@ -32,7 +32,7 @@ Write a professional, 2-3 paragraph executive summary of the project's current h
 Do NOT use markdown. Write plain text only, separated by newlines. Be analytical and professional."""
 
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=500,
