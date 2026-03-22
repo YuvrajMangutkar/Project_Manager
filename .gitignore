@@ -1,6 +1,6 @@
 # Virtual Environment
 env/
-env/
+env_backup/
 
 # Python
 __pycache__/
