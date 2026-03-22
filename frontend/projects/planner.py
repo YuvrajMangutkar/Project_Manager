@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 #   You can run Ollama as a separate Docker service on Render.
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama3-8b-8192")  # free model on Groq
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")  # free model on Groq (llama3-8b-8192 was decommissioned)
 
 USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("1", "true", "yes")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")

@@ -8,16 +8,9 @@ ENV PYTHONUNBUFFERED=1
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies (e.g., for PlantUML or other diagram generators if needed)
-RUN apt-get update && apt-get install -y \
-    graphviz \
-    default-jre \
-    wget \
-    curl \
-    && wget -O /app/plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2023.13/plantuml-1.2023.13.jar \
-    && rm -rf /var/lib/apt/lists/*
-
-# NOTE: Ollama local installation may fail in Render environment; use external Ollama host (OLLAMA_HOST) or OpenAI fallback.
+# Diagrams use the free PlantUML public server — no Java or plantuml.jar needed
+# Only curl is kept for basic health-check ability
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
 COPY requirements.txt /app/
