@@ -12,6 +12,9 @@ It uses multi-agent reasoning to automatically break down project goals into str
 | Feature | Description |
 |---|---|
 | 🧠 **AI Task Generation** | Groq LLM (Llama 3.1) automatically breaks a project goal into prioritized, scheduled tasks |
+| 💬 **AI Chat Assistant** | Floating project-aware context AI assistant to answer questions about tasks and deadlines |
+| 🪄 **AI Task Scaffolding** | One-click button to generate boilerplate code, outlines, or actionable steps for any task |
+| 📄 **Executive PDF Reports** | Generates a downloadable formal status report with an AI-written executive summary |
 | 📊 **Progress Tracking** | Log actual days spent per task; overdue tasks are automatically detected |
 | 🔁 **Auto-Rescheduling** | When a task is delayed, all future tasks are automatically shifted |
 | ⚠️ **Critic Agent** | Evaluates project health and risk level (Low / Medium / High) after each task completion |
