@@ -4,6 +4,9 @@ from .planner import generate_tasks
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from datetime import datetime,timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 from .critic import run_critic
 from .monitor import check_project_overdue
 from django.contrib.auth.decorators import login_required
@@ -16,8 +19,8 @@ from .plantuml_generator import generate_usecase_diagram
 
 @login_required
 def dashboard(request):
-    projects=Project.objects.all()
-    return render(request,'projects/dashboard.html',{'projects':projects})
+    projects = Project.objects.filter(user=request.user)
+    return render(request, 'projects/dashboard.html', {'projects': projects})
 
 
 def project_detail(request, project_id):
@@ -54,7 +57,15 @@ def create_project(request):
                 )
                 current_date=due_date
         except Exception as e:
-            print("Planner error:",e)
+            import traceback
+            error_detail = traceback.format_exc()
+            logger.error(f"Planner error for project {project.id}: {e}\n{error_detail}")
+            # Save the error as a visible AI insight on the project
+            AIInsight.objects.create(
+                project=project,
+                agent_type="planner",
+                message=f"⚠️ Task generation failed: {e}\n\nCheck your GROQ_API_KEY in Render environment variables."
+            )
         
         return redirect("dashboard")
     return render(request,"projects/create_project.html")
@@ -173,19 +184,8 @@ def usecase_diagram_view(request, project_id):
     })
 
 
-@login_required
-def download_usecase_diagram(request, project_id):
-    project = get_object_or_404(Project, id=project_id)
-
-    diagram_data = generate_usecase_diagram(project)
-
-    file_path = diagram_data["image_path"]
-
-    return FileResponse(
-        open(file_path, "rb"),
-        as_attachment=True,
-        filename=f"usecase_project_{project.id}.png"
-    )
+# download_usecase_diagram removed — diagrams are served directly from PlantUML server URL.
+# Use the image_url from the view context to download via the browser.
 
 from .dfd_level0_generator import generate_dfd_level0
 
@@ -203,18 +203,7 @@ def dfd_level0_view(request, project_id):
     })
 
 
-@login_required
-def download_dfd_level0(request, project_id):
-
-    project = get_object_or_404(Project, id=project_id)
-
-    diagram = generate_dfd_level0(project)
-
-    return FileResponse(
-        open(diagram["image_path"], "rb"),
-        as_attachment=True,
-        filename=f"dfd_level0_project_{project.id}.png"
-    )
+# download_dfd_level0 removed — diagrams are served directly from PlantUML server URL.
 
 from .dfd_level1_generator import generate_dfd_level1
 from django.http import FileResponse
@@ -233,18 +222,7 @@ def dfd_level1_view(request, project_id):
     })
 
 
-@login_required
-def download_dfd_level1(request, project_id):
-
-    project = get_object_or_404(Project, id=project_id)
-
-    diagram = generate_dfd_level1(project)
-
-    return FileResponse(
-        open(diagram["image_path"], "rb"),
-        as_attachment=True,
-        filename=f"dfd_level1_project_{project.id}.png"
-    )
+# download_dfd_level1 removed — diagrams are served directly from PlantUML server URL.
 
 from .activity_generator import generate_activity_diagram
 
@@ -263,15 +241,4 @@ def activity_diagram_view(request, project_id):
     })
 
 
-@login_required
-def download_activity_diagram(request, project_id):
-
-    project = get_object_or_404(Project, id=project_id)
-
-    diagram = generate_activity_diagram(project)
-
-    return FileResponse(
-        open(diagram["image_path"], "rb"),
-        as_attachment=True,
-        filename=f"activity_project_{project.id}.png"
-    )
+# download_activity_diagram removed — diagrams are served directly from PlantUML server URL.

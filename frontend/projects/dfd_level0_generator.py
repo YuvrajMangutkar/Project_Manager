@@ -1,16 +1,10 @@
-import os
-import subprocess
-import time
-from django.conf import settings
-
-PLANTUML_JAVA_PATH = "java"
-PLANTUML_JAR_PATH = "/app/plantuml.jar"
+from .plantuml_encoder import plantuml_url
 
 
 def generate_dfd_level0(project):
-
-    plantuml_code = f"""
-@startuml
+    """DFD Level 0 (Context Diagram) via PlantUML public server."""
+    code = f"""@startuml
+skinparam backgroundColor #FAFAFA
 
 rectangle "User" as User
 rectangle "AI Project Manager" as System
@@ -26,28 +20,11 @@ System --> User : UML Diagrams
 System --> DB : Store Project Data
 DB --> System : Retrieve Tasks
 
-@enduml
-"""
+@enduml"""
 
-    diagrams_path = os.path.join(settings.MEDIA_ROOT, "diagrams")
-    os.makedirs(diagrams_path, exist_ok=True)
-
-    filename = f"dfd_level0_project_{project.id}_{int(time.time())}.puml"
-    file_path = os.path.join(diagrams_path, filename)
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(plantuml_code)
-
-    subprocess.run([
-        PLANTUML_JAVA_PATH,
-        "-jar",
-        PLANTUML_JAR_PATH,
-        file_path
-    ])
-
-    image_name = filename.replace(".puml", ".png")
-
+    url = plantuml_url(code)
     return {
-        "image_url": f"/media/diagrams/{image_name}",
-        "image_path": os.path.join(diagrams_path, image_name)
+        "image_url": url,
+        "image_path": None,
+        "plantuml_code": code,
     }
