@@ -1,18 +1,21 @@
-from django.shortcuts import render,get_object_or_404
-from .models import Project, Task, Progress, AIInsight
-from .planner import generate_tasks
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
-from datetime import datetime,timedelta
 import logging
-
 logger = logging.getLogger(__name__)
+import json
+import os
+import io
+import traceback
+from datetime import datetime, timedelta
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, FileResponse, HttpResponse
+from django.conf import settings
+from django.contrib.auth import login, logout, authenticate
+
+from .models import Project, Task, Progress, AIInsight, ProjectMessage
+from .planner import generate_tasks
 from .critic import run_critic
 from .monitor import check_project_overdue
-from django.contrib.auth.decorators import login_required
 from .orchestrator import run_post_task_agents
-from .diagram_generator import generate_usecase_diagram
-from django.http import FileResponse
 from .forms import TaskForm
 
 from .plantuml_generator import generate_usecase_diagram
@@ -186,10 +189,7 @@ def gantt_view(request, project_id):
         "total_duration": current_offset if current_offset > 0 else 1
     })
 
-import json
-from django.http import JsonResponse
-from django.conf import settings
-from .models import ProjectMessage
+
 
 @login_required
 def ai_chat_api(request, project_id):
@@ -586,71 +586,77 @@ def groq_debug_view(request):
 
 @login_required
 def api_dashboard(request):
-    projects = Project.objects.filter(user=request.user)
-    data = []
-    for p in projects:
-        data.append({
-            'id': p.id,
-            'goal': p.goal,
-            'status': p.status,
-            'total_days': p.total_days,
-            'completion_rate': p.completion_rate,
-            'start_date': p.start_date.isoformat() if p.start_date else None,
-            'created_at': p.created_at.isoformat() if p.created_at else None,
-            'tasks': p.tasks.count()
-        })
-    return JsonResponse({'projects': data})
+    try:
+        projects = Project.objects.filter(user=request.user)
+        data = []
+        for p in projects:
+            data.append({
+                'id': p.id,
+                'goal': p.goal,
+                'status': p.status,
+                'total_days': p.total_days,
+                'completion_rate': p.completion_rate,
+                'start_date': p.start_date.isoformat() if p.start_date else None,
+                'tasks': p.tasks.count()
+            })
+        return JsonResponse({'projects': data})
+    except Exception as e:
+        logger.error(f"Error in api_dashboard: {e}\n{traceback.format_exc()}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 def api_project_detail(request, project_id):
-    project = get_object_or_404(Project, id=project_id, user=request.user)
-    check_project_overdue(project)
+    try:
+        project = get_object_or_404(Project, id=project_id, user=request.user)
+        check_project_overdue(project)
+        
+        tasks = project.tasks.all()
+        tasks_data = []
+        for t in tasks:
+            tasks_data.append({
+                'id': t.id,
+                'title': t.title,
+                'description': t.description,
+                'priority': t.priority,
+                'estimated_days': t.estimated_days,
+                'due_date': t.due_date.strftime("%b %d, %Y") if t.due_date else None,
+                'status': t.status,
+            })
+            
+        insights = project.insights.all().order_by('-created_at')
+        insights_data = []
+        for i in insights:
+            insights_data.append({
+                'id': i.id,
+                'agent_type': i.agent_type,
+                'message': i.message,
+                'created_at': i.created_at.isoformat() if i.created_at else None,
+            })
+            
+        messages = project.messages.all()
+        messages_data = []
+        for m in messages:
+            messages_data.append({
+                'role': m.role,
+                'content': m.content
+            })
     
-    tasks = project.tasks.all()
-    tasks_data = []
-    for t in tasks:
-        tasks_data.append({
-            'id': t.id,
-            'title': t.title,
-            'description': t.description,
-            'priority': t.priority,
-            'estimated_days': t.estimated_days,
-            'due_date': t.due_date.strftime("%b %d, %Y") if t.due_date else None,
-            'status': t.status,
+        return JsonResponse({
+            'project': {
+                'id': project.id,
+                'goal': project.goal,
+                'status': project.status,
+                'total_days': project.total_days,
+                'completion_rate': project.completion_rate,
+                'start_date': project.start_date.isoformat() if project.start_date else None,
+                'tasks': tasks_data,
+                'insights': insights_data,
+                'messages': messages_data
+            }
         })
-        
-    insights = project.insights.all().order_by('-created_at')
-    insights_data = []
-    for i in insights:
-        insights_data.append({
-            'id': i.id,
-            'agent_type': i.agent_type,
-            'message': i.message,
-            'created_at': i.created_at.isoformat() if i.created_at else None,
-        })
-        
-    messages = project.messages.all()
-    messages_data = []
-    for m in messages:
-        messages_data.append({
-            'role': m.role,
-            'content': m.content
-        })
-
-    return JsonResponse({
-        'project': {
-            'id': project.id,
-            'goal': project.goal,
-            'status': project.status,
-            'total_days': project.total_days,
-            'completion_rate': project.completion_rate,
-            'start_date': project.start_date.isoformat() if project.start_date else None,
-            'created_at': project.created_at.isoformat() if project.created_at else None,
-            'tasks': tasks_data,
-            'insights': insights_data,
-            'messages': messages_data
-        }
-    })
+    except Exception as e:
+        logger.error(f"Error in api_project_detail for project {project_id}: {e}\n{traceback.format_exc()}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required
@@ -736,5 +742,5 @@ def api_complete_task(request, task_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @login_required
-def react_app(request, path=''):
+def react_app(request, *args, **kwargs):
     return render(request, "react_index.html")

@@ -12,7 +12,7 @@ class Project(models.Model):
     user=models.ForeignKey(User, on_delete=models.CASCADE)
     goal=models.TextField()
     total_days=models.IntegerField()
-    start_date=models.DateField(auto_now=True)
+    start_date=models.DateField(auto_now_add=True)
     status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     completion_rate=models.FloatField(default=0)
     risk_level=models.CharField(max_length=20, default='low')
