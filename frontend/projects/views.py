@@ -581,3 +581,160 @@ def groq_debug_view(request):
         lines.append(traceback.format_exc())
 
     return HttpResponse("\n".join(lines), content_type="text/plain")
+
+# ── React JSON API Views ─────────────────────────────────────────────────────
+
+@login_required
+def api_dashboard(request):
+    projects = Project.objects.filter(user=request.user)
+    data = []
+    for p in projects:
+        data.append({
+            'id': p.id,
+            'goal': p.goal,
+            'status': p.status,
+            'total_days': p.total_days,
+            'completion_rate': p.completion_rate,
+            'start_date': p.start_date.isoformat() if p.start_date else None,
+            'created_at': p.created_at.isoformat() if p.created_at else None,
+            'tasks': p.tasks.count()
+        })
+    return JsonResponse({'projects': data})
+
+@login_required
+def api_project_detail(request, project_id):
+    project = get_object_or_404(Project, id=project_id, user=request.user)
+    check_project_overdue(project)
+    
+    tasks = project.tasks.all()
+    tasks_data = []
+    for t in tasks:
+        tasks_data.append({
+            'id': t.id,
+            'title': t.title,
+            'description': t.description,
+            'priority': t.priority,
+            'estimated_days': t.estimated_days,
+            'due_date': t.due_date.strftime("%b %d, %Y") if t.due_date else None,
+            'status': t.status,
+        })
+        
+    insights = project.insights.all().order_by('-created_at')
+    insights_data = []
+    for i in insights:
+        insights_data.append({
+            'id': i.id,
+            'agent_type': i.agent_type,
+            'message': i.message,
+            'created_at': i.created_at.isoformat() if i.created_at else None,
+        })
+        
+    messages = project.messages.all()
+    messages_data = []
+    for m in messages:
+        messages_data.append({
+            'role': m.role,
+            'content': m.content
+        })
+
+    return JsonResponse({
+        'project': {
+            'id': project.id,
+            'goal': project.goal,
+            'status': project.status,
+            'total_days': project.total_days,
+            'completion_rate': project.completion_rate,
+            'start_date': project.start_date.isoformat() if project.start_date else None,
+            'created_at': project.created_at.isoformat() if project.created_at else None,
+            'tasks': tasks_data,
+            'insights': insights_data,
+            'messages': messages_data
+        }
+    })
+
+
+@login_required
+def api_create_project(request):
+    if request.method == "POST":
+        import json
+        data = json.loads(request.body)
+        goal = data.get("goal")
+        total_days = int(data.get("total_days", 7))
+
+        project = Project.objects.create(
+            user=request.user,
+            goal=goal,
+            total_days=total_days
+        )
+        try:
+            generated_tasks = generate_tasks(goal, total_days)
+            current_date = project.start_date
+            for t in generated_tasks:
+                estimated = int(t.get("estimated_days", 1))
+                due_date = current_date + timedelta(days=estimated)
+                Task.objects.create(
+                    project=project,
+                    title=t.get('title', "Untitled Task"),
+                    description=t.get("description", ""),
+                    priority=t.get("priority", "medium"),
+                    estimated_days=estimated,
+                    due_date=due_date
+                )
+                current_date = due_date
+        except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
+            logger.error(f"Planner error for project {project.id}: {e}\n{error_detail}")
+            AIInsight.objects.create(
+                project=project,
+                agent_type="planner",
+                message=f"⚠️ Task generation failed: {e}\n\nCheck your GROQ_API_KEY in Render environment variables."
+            )
+            return JsonResponse({'error': str(e)}, status=500)
+            
+        return JsonResponse({'status': 'success', 'project_id': project.id})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def api_complete_task(request, task_id):
+    if request.method == "POST":
+        import json
+        data = json.loads(request.body)
+        actual_days = int(data.get("actual_days", 1))
+        
+        task = get_object_or_404(Task, id=task_id, project__user=request.user)
+        task.status = "completed"
+        task.save()
+        
+        Progress.objects.create(
+            task=task,
+            actual_days=actual_days
+        )
+
+        if actual_days > task.estimated_days:
+            delay = actual_days - task.estimated_days
+            future_tasks = Task.objects.filter(
+                project=task.project,
+                status="pending",
+                due_date__gt=task.due_date  
+            ).order_by("due_date")
+
+            for ft in future_tasks:
+                ft.due_date = ft.due_date + timedelta(days=delay)
+                ft.save()
+
+            AIInsight.objects.create(
+                project=task.project,
+                agent_type="planner",
+                message=f"Task '{task.title}' was delayed by {delay} days. "
+                f"{future_tasks.count()} future tasks were rescheduled."
+            )
+
+        run_post_task_agents(task.project)
+        return JsonResponse({'status': 'success'})
+        
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def react_app(request, path=''):
+    return render(request, "react_index.html")
