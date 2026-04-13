@@ -20,6 +20,10 @@ __pycache__/
 # SQLite DB
 db.sqlite3
 
+# Scripts
+finalize_setup.ps1
+cleanup_git.ps1
+
 # VS Code / OS
 .vscode/
 .DS_Store
